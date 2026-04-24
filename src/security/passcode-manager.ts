@@ -82,6 +82,18 @@ export function isPasscodeEnabled(): boolean {
 }
 
 /**
+ * Set a manual passcode.
+ * Returns the plaintext passcode for confirmation.
+ */
+export function setPasscode(value: string): string {
+	passcodeState = { value, issuedAt: Date.now() };
+	passcodeEnabled = true;
+	sessions.clear();
+	rateLimitByIp.clear();
+	return value;
+}
+
+/**
  * Revoke the current passcode and generate a new one.
  * Returns the new plaintext passcode for display.
  */
@@ -207,6 +219,12 @@ export function generateInternalToken(): string {
 	internalAuthToken = token;
 	process.env[INTERNAL_TOKEN_ENV] = token;
 	return token;
+}
+
+/** Clear the internal token. Used in tests. */
+export function clearInternalToken(): void {
+	internalAuthToken = null;
+	delete process.env[INTERNAL_TOKEN_ENV];
 }
 
 /**

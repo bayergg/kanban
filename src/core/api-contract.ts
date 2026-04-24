@@ -955,6 +955,8 @@ export const runtimeConfigResponseSchema = z.object({
 	openPrPromptTemplate: z.string(),
 	commitPromptTemplateDefault: z.string(),
 	openPrPromptTemplateDefault: z.string(),
+	isRemoteMode: z.boolean(),
+	passcodeEnabled: z.boolean(),
 });
 export type RuntimeConfigResponse = z.infer<typeof runtimeConfigResponseSchema>;
 
@@ -1275,3 +1277,14 @@ export const runtimeHookIngestResponseSchema = z.object({
 	error: z.string().optional(),
 });
 export type RuntimeHookIngestResponse = z.infer<typeof runtimeHookIngestResponseSchema>;
+
+export const runtimePasscodeUpdateRequestSchema = z.object({
+	passcode: z.string().min(1, "Passcode cannot be empty"),
+});
+export type RuntimePasscodeUpdateRequest = z.infer<typeof runtimePasscodeUpdateRequestSchema>;
+
+export const runtimePasscodeUpdateResponseSchema = z.object({
+	ok: z.boolean(),
+	error: z.string().optional(),
+});
+export type RuntimePasscodeUpdateResponse = z.infer<typeof runtimePasscodeUpdateResponseSchema>;

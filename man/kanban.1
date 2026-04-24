@@ -1,10 +1,16 @@
-.TH KANBAN 1 "March 2026" "kanban 0.1.10" "User Commands"
+.TH KANBAN 1 "April 2026" "kanban 0.1.64" "User Commands"
 .SH NAME
 kanban \- local orchestration board for coding agents
 .SH SYNOPSIS
 .B kanban
+.RI [ --host " " ip ]
 .RI [ --port " " number|auto ]
 .RI [ --no-open ]
+.RI [ --https ]
+.RI [ --cert " " path ]
+.RI [ --key " " path ]
+.RI [ --no-passcode ]
+.RI [ --passcode " " value ]
 .RI [ command ]
 .br
 .B kanban task
@@ -24,11 +30,29 @@ When launched inside a git repository, it opens that repository's indexed worksp
 When launched outside git, it starts with no active workspace or falls back to the first indexed project.
 .SH OPTIONS
 .TP
+.B --host <ip>
+Host IP to bind the server to (default: 127.0.0.1).
+.TP
 .B --port <number|auto>
 Bind to a specific local port or pick the first available port starting at 3484.
 .TP
 .B --no-open
 Do not open the browser automatically.
+.TP
+.B --https
+Enable HTTPS. Requires both --cert and --key.
+.TP
+.B --cert <path>
+Path to a TLS certificate PEM file (implies HTTPS).
+.TP
+.B --key <path>
+Path to a TLS private key PEM file (implies HTTPS).
+.TP
+.B --no-passcode
+Disable auto-generated passcode for remote access (for advanced users behind a reverse proxy).
+.TP
+.B --passcode <value>
+Set a manual passcode for remote access.
 .TP
 .B --help, -h
 Show help text and exit.

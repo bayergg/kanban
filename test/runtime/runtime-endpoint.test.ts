@@ -1,9 +1,11 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
 	buildKanbanRuntimeUrl,
 	buildKanbanRuntimeWsUrl,
 	clearKanbanRuntimeTls,
+	clearRuntimeFetchCache,
+	DEFAULT_KANBAN_RUNTIME_HOST,
 	DEFAULT_KANBAN_RUNTIME_PORT,
 	getKanbanRuntimeHost,
 	getKanbanRuntimePort,
@@ -14,6 +16,7 @@ import {
 	setKanbanRuntimePort,
 	setKanbanRuntimeTls,
 } from "../../src/core/runtime-endpoint";
+import { clearInternalToken } from "../../src/security/passcode-manager";
 
 const originalRuntimePort = getKanbanRuntimePort();
 const originalRuntimeHost = getKanbanRuntimeHost();
@@ -22,10 +25,20 @@ const originalEnvHost = process.env.KANBAN_RUNTIME_HOST;
 const originalEnvHttps = process.env.KANBAN_RUNTIME_HTTPS;
 const originalEnvTlsCa = process.env.KANBAN_RUNTIME_TLS_CA;
 
+beforeEach(() => {
+	setKanbanRuntimeHost(DEFAULT_KANBAN_RUNTIME_HOST);
+	setKanbanRuntimePort(DEFAULT_KANBAN_RUNTIME_PORT);
+	clearKanbanRuntimeTls();
+	clearRuntimeFetchCache();
+	clearInternalToken();
+});
+
 afterEach(() => {
 	setKanbanRuntimePort(originalRuntimePort);
 	setKanbanRuntimeHost(originalRuntimeHost);
 	clearKanbanRuntimeTls();
+	clearRuntimeFetchCache();
+	clearInternalToken();
 	if (originalEnvPort === undefined) {
 		delete process.env.KANBAN_RUNTIME_PORT;
 	} else {

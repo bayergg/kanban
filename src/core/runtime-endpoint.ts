@@ -57,7 +57,7 @@ let runtimeTlsCa: string | null = process.env[KANBAN_RUNTIME_TLS_CA_ENV]?.trim()
  */
 let runtimeHttps: boolean = process.env[KANBAN_RUNTIME_HTTPS_ENV] === "1";
 
-function clearRuntimeFetchCache(): void {
+export function clearRuntimeFetchCache(): void {
 	_runtimeFetchPromise = undefined;
 }
 

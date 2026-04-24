@@ -20,6 +20,7 @@ import {
 	Palette,
 	Plus,
 	Settings,
+	Shield,
 	SlidersHorizontal,
 	X,
 } from "lucide-react";
@@ -94,7 +95,7 @@ export type RuntimeSettingsSection = "shortcuts";
 
 const SETTINGS_AGENT_ORDER: readonly RuntimeAgentId[] = ["cline", "claude", "codex", "droid", "kiro"];
 
-type SettingsNavId = "general" | "cline" | "git-prompts" | "notifications" | "appearance" | "project";
+type SettingsNavId = "general" | "cline" | "git-prompts" | "notifications" | "appearance" | "project" | "remote";
 
 const SETTINGS_NAV_ITEMS: ReadonlyArray<{
 	id: SettingsNavId;
@@ -108,6 +109,7 @@ const SETTINGS_NAV_ITEMS: ReadonlyArray<{
 	{ id: "notifications", label: "Notifications", icon: <Bell size={16} /> },
 	{ id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
 	{ id: "project", label: "Project", icon: <FolderOpen size={16} /> },
+	{ id: "remote", label: "Remote Access", icon: <Shield size={16} /> },
 ];
 
 function getShortcutIconOption(icon: string | undefined): RuntimeShortcutIconOption {
@@ -375,6 +377,7 @@ export function RuntimeSettingsDialog({
 	const [shortcuts, setShortcuts] = useState<RuntimeProjectShortcut[]>([]);
 	const [commitPromptTemplate, setCommitPromptTemplate] = useState("");
 	const [openPrPromptTemplate, setOpenPrPromptTemplate] = useState("");
+	const [draftPasscode, setDraftPasscode] = useState("");
 	const [selectedPromptVariant, setSelectedPromptVariant] = useState<TaskGitAction>("commit");
 	const [copiedVariableToken, setCopiedVariableToken] = useState<string | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
@@ -433,8 +436,17 @@ export function RuntimeSettingsDialog({
 	}, [agentAutonomousModeEnabled, config?.agents]);
 	const displayedAgents = useMemo(() => supportedAgents, [supportedAgents]);
 	const navItems = useMemo(
-		() => SETTINGS_NAV_ITEMS.filter((item) => !item.clineOnly || selectedAgentId === "cline"),
-		[selectedAgentId],
+		() =>
+			SETTINGS_NAV_ITEMS.filter((item) => {
+				if (item.clineOnly && selectedAgentId !== "cline") {
+					return false;
+				}
+				if (item.id === "remote" && !config?.isRemoteMode) {
+					return false;
+				}
+				return true;
+			}),
+		[selectedAgentId, config?.isRemoteMode],
 	);
 	const configuredAgentId = config?.selectedAgentId ?? null;
 	const firstInstalledAgentId = displayedAgents.find((agent) => agent.installed)?.id;
@@ -488,16 +500,20 @@ export function RuntimeSettingsDialog({
 		) {
 			return true;
 		}
-		return (
+		if (
 			normalizeTemplateForComparison(openPrPromptTemplate) !==
 			normalizeTemplateForComparison(initialOpenPrPromptTemplate)
-		);
+		) {
+			return true;
+		}
+		return draftPasscode.length > 0;
 	}, [
 		agentAutonomousModeEnabled,
 		clineMcpSettings.hasUnsavedChanges,
 		clineSettings.hasUnsavedChanges,
 		commitPromptTemplate,
 		config,
+		draftPasscode,
 		draftThemeId,
 		initialAgentAutonomousModeEnabled,
 		initialCommitPromptTemplate,
@@ -522,6 +538,7 @@ export function RuntimeSettingsDialog({
 		setShortcuts(config?.shortcuts ?? []);
 		setCommitPromptTemplate(config?.commitPromptTemplate ?? "");
 		setOpenPrPromptTemplate(config?.openPrPromptTemplate ?? "");
+		setDraftPasscode("");
 		setSaveError(null);
 	}, [
 		config?.agentAutonomousModeEnabled,
@@ -697,6 +714,23 @@ export function RuntimeSettingsDialog({
 				return;
 			}
 		}
+
+		if (draftPasscode.length > 0) {
+			const { getRuntimeTrpcClient } = await import("@/runtime/trpc-client");
+			const trpc = getRuntimeTrpcClient(workspaceId);
+			try {
+				const response = await trpc.runtime.updatePasscode.mutate({ passcode: draftPasscode });
+				if (!response.ok) {
+					setSaveError(response.error ?? "Could not update passcode.");
+					return;
+				}
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				setSaveError(`Could not update passcode: ${message}`);
+				return;
+			}
+		}
+
 		const saved = await save({
 			selectedAgentId,
 			agentAutonomousModeEnabled,
@@ -1045,6 +1079,8 @@ export function RuntimeSettingsDialog({
 							Reset sidebar, split pane, and terminal resize customizations back to their defaults.
 						</p>
 					</div>
+
+					{/* ---- Project ---- */}
 					<div data-settings-section="project" />
 					<div className="sticky top-0 -mx-5 px-5 pt-4 pb-2 bg-surface-1 z-10">
 						<h2 className="flex items-center gap-2 text-base font-semibold text-text-primary m-0">
@@ -1159,8 +1195,51 @@ export function RuntimeSettingsDialog({
 						) : null}
 					</div>
 
+					{/* ---- Remote Access ---- */}
+					{config?.isRemoteMode ? (
+						<>
+							<div data-settings-section="remote" />
+							<div className="sticky top-0 -mx-5 px-5 pt-4 pb-2 bg-surface-1 z-10">
+								<h2 className="flex items-center gap-2 text-base font-semibold text-text-primary m-0">
+									<Shield size={16} className="text-text-secondary" />
+									Remote Access
+								</h2>
+							</div>
+							<div className="rounded-lg border border-border bg-surface-0 px-4 py-3 mb-4">
+								<h6 className="text-[12px] font-semibold uppercase tracking-wider text-text-secondary m-0 mb-2">
+									Passcode
+								</h6>
+								{config.passcodeEnabled ? (
+									<>
+										<p className="text-text-secondary text-[13px] mt-0 mb-3">
+											Update the passcode used for remote access. Changing the passcode will invalidate all
+											current sessions.
+										</p>
+										<div className="flex flex-col gap-2">
+											<input
+												type="text"
+												value={draftPasscode}
+												onChange={(e) => setDraftPasscode(e.target.value)}
+												placeholder="New passcode"
+												disabled={controlsDisabled}
+												className="h-9 w-full rounded-md border border-border bg-surface-2 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none disabled:opacity-40"
+											/>
+											<p className="text-text-tertiary text-[11px] m-0">
+												Leave empty to keep the current passcode.
+											</p>
+										</div>
+									</>
+								) : (
+									<p className="text-status-orange text-[13px] m-0">
+										Passcode authentication is disabled for this instance.
+									</p>
+								)}
+							</div>
+						</>
+					) : null}
+
 					{saveError ? (
-						<div className="flex gap-2 rounded-md border border-status-red/30 bg-status-red/5 p-3 text-[13px]">
+						<div className="mt-4 flex gap-2 rounded-md border border-status-red/30 bg-status-red/5 p-3 text-[13px]">
 							<span className="text-text-primary">{saveError}</span>
 						</div>
 					) : null}

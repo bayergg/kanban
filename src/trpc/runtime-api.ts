@@ -30,6 +30,7 @@ import {
 	parseClineProviderSettingsSaveRequest,
 	parseClineUpdateProviderRequest,
 	parseCommandRunRequest,
+	parsePasscodeUpdateRequest,
 	parseRuntimeConfigSaveRequest,
 	parseShellSessionStartRequest,
 	parseTaskChatAbortRequest,
@@ -43,6 +44,7 @@ import {
 } from "../core/api-validation";
 import { isHomeAgentSessionId } from "../core/home-agent-session";
 import { resolveTaskTitle } from "../core/task-title.js";
+import { setPasscode } from "../security/passcode-manager";
 import { openInBrowser } from "../server/browser";
 import { buildRuntimeConfigResponse, resolveAgentCommand } from "../terminal/agent-registry";
 import type { TerminalSessionManager } from "../terminal/session-manager";
@@ -732,6 +734,12 @@ export function createRuntimeApi(deps: CreateRuntimeApiDependencies): RuntimeTrp
 		},
 		runUpdateNow: async () => {
 			return await deps.runUpdateNow();
+		},
+		updatePasscode: async (input) => {
+			const parsed = parsePasscodeUpdateRequest(input);
+			setPasscode(parsed.passcode);
+			process.stdout.write(`\n🔐 Remote access passcode updated to: ${parsed.passcode}\n\n`);
+			return { ok: true };
 		},
 	};
 }

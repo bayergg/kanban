@@ -13,6 +13,7 @@ export function createGitTestEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.Proc
 		GIT_AUTHOR_EMAIL: "test@test.com",
 		GIT_COMMITTER_NAME: "Test",
 		GIT_COMMITTER_EMAIL: "test@test.com",
+		KANBAN_RUNTIME_HOST: "127.0.0.1",
 		...overrides,
 	};
 }

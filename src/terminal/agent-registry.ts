@@ -6,6 +6,8 @@ import type {
 	RuntimeClineProviderSettings,
 	RuntimeConfigResponse,
 } from "../core/api-contract";
+import { isKanbanRemoteHost } from "../core/runtime-endpoint";
+import { isPasscodeEnabled } from "../security/passcode-manager";
 import { isBinaryAvailableOnPath } from "./command-discovery";
 
 export interface ResolvedAgentCommand {
@@ -124,5 +126,7 @@ export function buildRuntimeConfigResponse(
 		openPrPromptTemplate: runtimeConfig.openPrPromptTemplate,
 		commitPromptTemplateDefault: runtimeConfig.commitPromptTemplateDefault,
 		openPrPromptTemplateDefault: runtimeConfig.openPrPromptTemplateDefault,
+		isRemoteMode: isKanbanRemoteHost(),
+		passcodeEnabled: isPasscodeEnabled(),
 	};
 }

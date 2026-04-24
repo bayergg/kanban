@@ -15,6 +15,7 @@ import {
 	type RuntimeDirectoryListRequest,
 	type RuntimeGitCheckoutRequest,
 	type RuntimeHookIngestRequest,
+	type RuntimePasscodeUpdateRequest,
 	type RuntimeProjectAddRequest,
 	type RuntimeProjectRemoveRequest,
 	type RuntimeShellSessionStartRequest,
@@ -47,6 +48,7 @@ import {
 	runtimeDirectoryListRequestSchema,
 	runtimeGitCheckoutRequestSchema,
 	runtimeHookIngestRequestSchema,
+	runtimePasscodeUpdateRequestSchema,
 	runtimeProjectAddRequestSchema,
 	runtimeProjectRemoveRequestSchema,
 	runtimeShellSessionStartRequestSchema,
@@ -602,4 +604,15 @@ export function parseDirectoryListRequest(value: unknown): RuntimeDirectoryListR
 
 export function parseClineAccountSwitchRequest(value: unknown): RuntimeClineAccountSwitchRequest {
 	return parseWithSchema(runtimeClineAccountSwitchRequestSchema, value);
+}
+
+export function parsePasscodeUpdateRequest(value: unknown): RuntimePasscodeUpdateRequest {
+	const parsed = parseWithSchema(runtimePasscodeUpdateRequestSchema, value);
+	const passcode = parsed.passcode.trim();
+	if (!passcode) {
+		throw new Error("Passcode cannot be empty.");
+	}
+	return {
+		passcode,
+	};
 }

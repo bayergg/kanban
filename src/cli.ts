@@ -30,7 +30,7 @@ import {
 	setKanbanRuntimePort,
 	setKanbanRuntimeTls,
 } from "./core/runtime-endpoint";
-import { disablePasscode, generateInternalToken, generatePasscode } from "./security/passcode-manager";
+import { disablePasscode, generateInternalToken, generatePasscode, setPasscode } from "./security/passcode-manager";
 import { terminateProcessForTimeout } from "./server/process-termination";
 import type { RuntimeStateHub } from "./server/runtime-state-hub";
 import { captureNodeException, flushNodeTelemetry } from "./telemetry/sentry-node.js";
@@ -46,6 +46,7 @@ interface CliOptions {
 	cert: string | null;
 	key: string | null;
 	noPasscode: boolean;
+	passcode: string | null;
 }
 
 const KANBAN_VERSION = typeof packageJson.version === "string" ? packageJson.version : "0.1.0";
@@ -75,6 +76,7 @@ interface RootCommandOptions {
 	cert?: string;
 	key?: string;
 	noPasscode?: boolean;
+	manualPasscode?: string;
 }
 
 type ShutdownIndicatorResult = "done" | "interrupted" | "failed";
@@ -87,13 +89,13 @@ interface ShutdownIndicator {
 /**
  * Decide whether this CLI invocation should auto-open a browser tab.
  *
- * This uses a positive allowlist for app-launch shapes like `kanban`,
- * `kanban --agent codex`, and `kanban --port 3484`. Any subcommand or
+ * This uses a positive allowlist for app-launch shapes like \`kanban\`,
+ * \`kanban --agent codex\`, and \`kanban --port 3484\`. Any subcommand or
  * unexpected argument is treated as a command-style invocation instead.
  */
 function shouldAutoOpenBrowserTabForInvocation(argv: string[]): boolean {
 	const launchFlags = new Set(["--open", "--no-open", "--skip-shutdown-cleanup", "--https", "--no-passcode"]);
-	const launchOptionsWithValues = new Set(["--host", "--port", "--agent", "--cert", "--key"]);
+	const launchOptionsWithValues = new Set(["--host", "--port", "--agent", "--cert", "--key", "--manual-passcode"]);
 
 	for (let index = 0; index < argv.length; index += 1) {
 		const arg = argv[index];
@@ -565,6 +567,10 @@ async function runMainCommand(options: CliOptions, shouldAutoOpenBrowser: boolea
 		if (options.noPasscode) {
 			disablePasscode();
 			console.log("Passcode authentication disabled (--no-passcode). Ensure you have your own auth layer.");
+		} else if (options.passcode) {
+			setPasscode(options.passcode);
+			generateInternalToken();
+			console.log(`\n🔐 Remote access passcode set to: ${options.passcode}\n`);
 		} else {
 			const passcode = generatePasscode();
 			generateInternalToken();
@@ -691,6 +697,7 @@ function createProgram(invocationArgs: string[]): Command {
 			"--no-passcode",
 			"Disable auto-generated passcode for remote access (for advanced users behind a reverse proxy).",
 		)
+		.option("--manual-passcode <value>", "Set a manual passcode for remote access.")
 		.showHelpAfterError()
 		.addHelpText("after", `\nRuntime URL: ${getKanbanRuntimeOrigin()}`);
 
@@ -728,6 +735,7 @@ function createProgram(invocationArgs: string[]): Command {
 				cert: options.cert ?? null,
 				key: options.key ?? null,
 				noPasscode: options.noPasscode === true,
+				passcode: options.manualPasscode ?? null,
 			},
 			shouldAutoOpenBrowser,
 		);

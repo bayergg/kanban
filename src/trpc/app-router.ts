@@ -55,6 +55,8 @@ import type {
 	RuntimeHookIngestResponse,
 	RuntimeOpenFileRequest,
 	RuntimeOpenFileResponse,
+	RuntimePasscodeUpdateRequest,
+	RuntimePasscodeUpdateResponse,
 	RuntimeProjectAddRequest,
 	RuntimeProjectAddResponse,
 	RuntimeProjectDirectoryPickerResponse,
@@ -146,6 +148,8 @@ import {
 	runtimeHookIngestResponseSchema,
 	runtimeOpenFileRequestSchema,
 	runtimeOpenFileResponseSchema,
+	runtimePasscodeUpdateRequestSchema,
+	runtimePasscodeUpdateResponseSchema,
 	runtimeProjectAddRequestSchema,
 	runtimeProjectAddResponseSchema,
 	runtimeProjectDirectoryPickerResponseSchema,
@@ -296,6 +300,7 @@ export interface RuntimeTrpcContext {
 		openFile: (input: RuntimeOpenFileRequest) => Promise<RuntimeOpenFileResponse>;
 		getUpdateStatus: (scope: RuntimeTrpcWorkspaceScope | null) => Promise<RuntimeUpdateStatusResponse>;
 		runUpdateNow: (scope: RuntimeTrpcWorkspaceScope | null) => Promise<RuntimeRunUpdateResponse>;
+		updatePasscode: (input: RuntimePasscodeUpdateRequest) => Promise<RuntimePasscodeUpdateResponse>;
 	};
 	workspaceApi: {
 		loadGitSummary: (
@@ -598,6 +603,12 @@ export const runtimeAppRouter = t.router({
 		runUpdateNow: t.procedure.output(runtimeRunUpdateResponseSchema).mutation(async ({ ctx }) => {
 			return await ctx.runtimeApi.runUpdateNow(ctx.workspaceScope);
 		}),
+		updatePasscode: t.procedure
+			.input(runtimePasscodeUpdateRequestSchema)
+			.output(runtimePasscodeUpdateResponseSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.runtimeApi.updatePasscode(input);
+			}),
 	}),
 	workspace: t.router({
 		getGitSummary: workspaceProcedure
