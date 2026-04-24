@@ -8,6 +8,7 @@ import {
 	parseToolOutput,
 } from "@/components/detail-panels/cline-chat-message-utils";
 import { ClineMarkdownContent } from "@/components/detail-panels/cline-markdown-content";
+import { extractThinkingBlocks } from "@/components/detail-panels/cline-thinking-block-extractor";
 import { TaskImageStrip } from "@/components/task-image-strip";
 import { cn } from "@/components/ui/cn";
 import { Spinner } from "@/components/ui/spinner";
@@ -175,6 +176,44 @@ function ReasoningMessageBlock({ message }: { message: ClineChatMessage }): Reac
 	);
 }
 
+function ThinkingInlineBlock({ thinking }: { thinking: string }): ReactElement {
+	const [expanded, setExpanded] = useState(false);
+
+	return (
+		<Collapsible.Root open={expanded} onOpenChange={setExpanded} className="w-full">
+			<Collapsible.Trigger asChild>
+				<button
+					type="button"
+					className="group flex w-full cursor-pointer items-center gap-1.5 rounded px-1.5 py-0 text-left text-sm"
+				>
+					<Brain size={14} className="shrink-0 text-text-tertiary" />
+					<span
+						className={cn(
+							"shrink-0 font-semibold group-hover:text-text-secondary",
+							expanded ? "text-text-secondary" : "text-text-tertiary",
+						)}
+					>
+						Thinking
+					</span>
+					<span
+						className={cn(
+							"shrink-0 group-hover:text-text-tertiary",
+							expanded ? "text-text-tertiary" : "text-text-tertiary/60",
+						)}
+					>
+						{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+					</span>
+				</button>
+			</Collapsible.Trigger>
+			<Collapsible.Content className="overflow-hidden data-[state=closed]:animate-[kb-collapsible-up_200ms_ease-out] data-[state=open]:animate-[kb-collapsible-down_200ms_ease-out]">
+				<div className="mt-1 w-full px-1.5 text-sm italic whitespace-pre-wrap break-words text-text-tertiary">
+					{thinking}
+				</div>
+			</Collapsible.Content>
+		</Collapsible.Root>
+	);
+}
+
 export function ClineChatMessageItem({ message }: { message: ClineChatMessage }): ReactElement {
 	if (message.role === "tool") {
 		return <ToolMessageBlock message={message} />;
@@ -196,9 +235,24 @@ export function ClineChatMessageItem({ message }: { message: ClineChatMessage })
 	}
 	if (message.role === "assistant") {
 		const normalizedAssistantContent = message.content.replace(/^\n+/, "");
+		const { blocks: thinkingBlocks, remainingContent } = extractThinkingBlocks(normalizedAssistantContent);
+		const hasThinkingBlocks = thinkingBlocks.length > 0;
+		const trimmedRemaining = remainingContent.trim();
+
+		const hasRemainingContent = trimmedRemaining.length > 0;
+
 		return (
 			<div className="min-w-0 w-full px-1.5 text-sm text-text-primary">
-				<ClineMarkdownContent content={normalizedAssistantContent} />
+				{hasThinkingBlocks ? (
+					<>
+						{thinkingBlocks.map((block, index) => (
+							<ThinkingInlineBlock key={index} thinking={block.thinking} />
+						))}
+						{hasRemainingContent ? <ClineMarkdownContent content={trimmedRemaining} /> : null}
+					</>
+				) : (
+					<ClineMarkdownContent content={normalizedAssistantContent} />
+				)}
 			</div>
 		);
 	}
