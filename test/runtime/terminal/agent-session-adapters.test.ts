@@ -159,6 +159,66 @@ describe("prepareAgentLaunch hook strategies", () => {
 		expect(getCodexConfigOverrideValues(launch.args, "check_for_update_on_startup")).toEqual(["false"]);
 	});
 
+	it("injects Kanban sidebar instructions via GEMINI_SYSTEM_MD for home Gemini sessions", async () => {
+		setupTempHome();
+		setKanbanProcessContext();
+		const launch = await prepareAgentLaunch({
+			taskId: "__home_agent__:workspace-1:gemini",
+			agentId: "gemini",
+			binary: "gemini",
+			args: [],
+			cwd: "/tmp",
+			prompt: "Create a task",
+		});
+
+		expect(launch.env.GEMINI_SYSTEM_MD).toBeDefined();
+		const systemPromptPath = launch.env.GEMINI_SYSTEM_MD;
+		expect(systemPromptPath).toBeDefined();
+		if (systemPromptPath) {
+			const systemPromptContent = readFileSync(systemPromptPath, "utf8");
+			expect(systemPromptContent).toContain("Kanban sidebar agent");
+			expect(systemPromptContent).toContain("'/usr/local/bin/node' '/Users/example/repo/dist/cli.js' task create");
+		}
+	});
+
+	it("preserves explicit GEMINI_SYSTEM_MD when set", async () => {
+		setupTempHome();
+		const launch = await prepareAgentLaunch({
+			taskId: "__home_agent__:workspace-1:gemini",
+			agentId: "gemini",
+			binary: "gemini",
+			args: [],
+			cwd: "/tmp",
+			prompt: "Create a task",
+			env: {
+				GEMINI_SYSTEM_MD: "/custom/system.md",
+			},
+		});
+
+		// Adapter should not override an explicitly provided GEMINI_SYSTEM_MD
+		expect(launch.env.GEMINI_SYSTEM_MD).toBeUndefined();
+	});
+
+	it("prepends Kanban sidebar instructions to prompt for home OpenCode sessions", async () => {
+		setupTempHome();
+		setKanbanProcessContext();
+		const launch = await prepareAgentLaunch({
+			taskId: "__home_agent__:workspace-1:opencode",
+			agentId: "opencode",
+			binary: "opencode",
+			args: [],
+			cwd: "/tmp",
+			prompt: "Create a task",
+		});
+
+		const promptIndex = launch.args.indexOf("--prompt");
+		expect(promptIndex).toBeGreaterThanOrEqual(0);
+		const fullPrompt = launch.args[promptIndex + 1];
+		expect(fullPrompt).toContain("Kanban sidebar agent");
+		expect(fullPrompt).toContain("'/usr/local/bin/node' '/Users/example/repo/dist/cli.js' task create");
+		expect(fullPrompt).toContain("Create a task");
+	});
+
 	it("disables Codex startup update checks for Kanban-launched sessions", async () => {
 		setupTempHome();
 		const launch = await prepareAgentLaunch({
