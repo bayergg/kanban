@@ -231,7 +231,7 @@ describe.sequential("runtime-config auto agent selection", () => {
 
 			await withTemporaryEnv({ home: tempHome, pathPrefix: tempBin }, async () => {
 				const state = await loadRuntimeConfig(tempProject);
-				expect(state.selectedAgentId).toBe("cline");
+				expect(state.selectedAgentId).toBe("gemini");
 			});
 		} finally {
 			cleanupBin();
