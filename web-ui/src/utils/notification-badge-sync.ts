@@ -2,6 +2,8 @@ import { LocalStorageKey, writeLocalStorageItem } from "@/storage/local-storage-
 
 const NOTIFICATION_BADGE_CLEAR_EVENT_KEY = LocalStorageKey.NotificationBadgeClearEvent;
 
+import { generateUuid } from "@runtime-uuid";
+
 interface NotificationBadgeClearEvent {
 	sourceId: string;
 	workspaceId: string;
@@ -35,10 +37,7 @@ function parseNotificationBadgeClearEvent(raw: string | null): NotificationBadge
 }
 
 export function createNotificationBadgeSyncSourceId(): string {
-	if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-		return crypto.randomUUID();
-	}
-	return `badge-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	return generateUuid();
 }
 
 export function broadcastNotificationBadgeClear(sourceId: string, workspaceId: string | null | undefined): void {

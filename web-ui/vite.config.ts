@@ -86,6 +86,7 @@ export default defineConfig({
 			"@runtime-shortcuts": resolve(__dirname, "../src/config/shortcut-utils.ts"),
 			"@runtime-task-id": resolve(__dirname, "../src/core/task-id.ts"),
 			"@runtime-task-title": resolve(__dirname, "../src/core/task-title.ts"),
+			"@runtime-uuid": resolve(__dirname, "../src/core/uuid.ts"),
 			"@runtime-task-worktree-path": resolve(__dirname, "../src/workspace/task-worktree-path.ts"),
 			"@runtime-task-state": resolve(__dirname, "../src/core/task-board-mutations.ts"),
 		},

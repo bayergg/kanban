@@ -1,3 +1,4 @@
+import { generateUuid } from "@runtime-uuid";
 import type { TaskImage } from "@/types";
 
 const MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024;
@@ -33,7 +34,7 @@ export async function fileToTaskImage(file: File): Promise<TaskImage | null> {
 				return;
 			}
 			resolve({
-				id: crypto.randomUUID().replaceAll("-", "").slice(0, 12),
+				id: generateUuid().replaceAll("-", "").slice(0, 12),
 				data: base64,
 				mimeType: file.type,
 				name: file.name || undefined,

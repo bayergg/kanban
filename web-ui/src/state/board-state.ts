@@ -1,6 +1,7 @@
 import type { DropResult } from "@hello-pangea/dnd";
 import { createShortTaskId } from "@runtime-task-id";
 import * as runtimeTaskState from "@runtime-task-state";
+import { generateUuid } from "@runtime-uuid";
 
 import { createInitialBoardData } from "@/data/board-data";
 import type { RuntimeAgentId, RuntimeClineReasoningEffort, RuntimeTaskClineSettings } from "@/runtime/types";
@@ -67,10 +68,7 @@ function normalizeColumnId(id: string): BoardColumnId | null {
 }
 
 function createBrowserUuid(): string {
-	if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-		return crypto.randomUUID();
-	}
-	return Math.random().toString(36).slice(2, 12);
+	return generateUuid();
 }
 
 function normalizeTaskImages(rawImages: unknown): TaskImage[] | undefined {

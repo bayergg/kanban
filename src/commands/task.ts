@@ -23,6 +23,7 @@ import {
 	trashTaskAndGetReadyLinkedTaskIds,
 	updateTask,
 } from "../core/task-board-mutations";
+import { generateUuid } from "../core/uuid";
 import { resolveProjectInputPath } from "../projects/project-path";
 import { loadWorkspaceContext, mutateWorkspaceState } from "../state/workspace-state";
 import type { RuntimeAppRouter } from "../trpc/app-router";
@@ -505,7 +506,7 @@ async function createTask(input: {
 				clineSettings: input.clineSettings,
 				baseRef: resolvedBaseRef,
 			},
-			() => globalThis.crypto.randomUUID(),
+			() => generateUuid(),
 		);
 		return {
 			board: result.board,

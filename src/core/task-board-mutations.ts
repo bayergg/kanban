@@ -10,6 +10,7 @@ import type {
 } from "./api-contract";
 import { createUniqueTaskId } from "./task-id";
 import { resolveTaskTitle } from "./task-title";
+import { generateUuid } from "./uuid";
 
 export interface RuntimeCreateTaskInput {
 	taskId?: string;
@@ -122,7 +123,7 @@ function collectTaskIds(board: RuntimeBoardData): Set<string> {
 }
 
 function createDependencyId(): string {
-	return crypto.randomUUID().replaceAll("-", "").slice(0, 8);
+	return generateUuid().replaceAll("-", "").slice(0, 8);
 }
 
 function createDependencyPairKey(backlogTaskId: string, linkedTaskId: string): string {
