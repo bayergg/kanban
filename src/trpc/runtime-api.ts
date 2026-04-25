@@ -294,6 +294,7 @@ export function createRuntimeApi(deps: CreateRuntimeApiDependencies): RuntimeTrp
 					cols: body.cols,
 					rows: body.rows,
 					workspaceId: workspaceScope.workspaceId,
+					customArgs: body.customArgs,
 				});
 
 				let nextSummary = summary;

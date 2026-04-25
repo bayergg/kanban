@@ -22,6 +22,7 @@ export interface RuntimeCreateTaskInput {
 	images?: RuntimeTaskImage[];
 	agentId?: RuntimeAgentId;
 	clineSettings?: RuntimeTaskClineSettings;
+	customArgs?: string[];
 	baseRef: string;
 }
 
@@ -34,6 +35,7 @@ export interface RuntimeUpdateTaskInput {
 	images?: RuntimeTaskImage[];
 	agentId?: RuntimeAgentId | null;
 	clineSettings?: RuntimeTaskClineSettings | null;
+	customArgs?: string[] | null;
 	baseRef: string;
 }
 
@@ -310,6 +312,7 @@ export function addTaskToColumn(
 		images: cloneTaskImages(input.images),
 		...(input.agentId ? { agentId: input.agentId } : {}),
 		...(input.clineSettings !== undefined ? { clineSettings: cloneTaskClineSettings(input.clineSettings) } : {}),
+		...(input.customArgs !== undefined && input.customArgs.length > 0 ? { customArgs: [...input.customArgs] } : {}),
 		baseRef,
 		createdAt: now,
 		updatedAt: now,
@@ -631,6 +634,14 @@ export function updateTask(
 						: input.clineSettings === null
 							? undefined
 							: cloneTaskClineSettings(input.clineSettings),
+				customArgs:
+					input.customArgs === undefined
+						? card.customArgs
+						: input.customArgs === null
+							? undefined
+							: input.customArgs.length > 0
+								? [...input.customArgs]
+								: undefined,
 				baseRef,
 				updatedAt: now,
 			};

@@ -90,6 +90,7 @@ export interface StartTaskSessionRequest {
 	rows?: number;
 	env?: Record<string, string | undefined>;
 	workspaceId?: string;
+	customArgs?: string[];
 }
 
 export interface StartShellSessionRequest {
@@ -151,6 +152,7 @@ function cloneStartTaskSessionRequest(request: StartTaskSessionRequest): StartTa
 		args: [...request.args],
 		images: request.images ? request.images.map((image) => ({ ...image })) : undefined,
 		env: request.env ? { ...request.env } : undefined,
+		customArgs: request.customArgs ? [...request.customArgs] : undefined,
 	};
 }
 
@@ -325,7 +327,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 			taskId: request.taskId,
 			agentId: request.agentId,
 			binary: request.binary,
-			args: request.args,
+			args: [...request.args, ...(request.customArgs ?? [])],
 			autonomousModeEnabled: request.autonomousModeEnabled,
 			cwd: request.cwd,
 			prompt: request.prompt,

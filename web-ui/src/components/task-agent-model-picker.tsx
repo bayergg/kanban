@@ -229,6 +229,8 @@ export function TaskAgentModelPicker({
 	onAgentIdChange,
 	clineSettings,
 	onClineSettingsChange,
+	customArgs,
+	onCustomArgsChange,
 	agentOptions,
 	clineProviderOptions,
 	clineModelOptions,
@@ -246,6 +248,8 @@ export function TaskAgentModelPicker({
 	onAgentIdChange: (value: RuntimeAgentId | undefined) => void;
 	clineSettings?: RuntimeTaskClineSettings | undefined;
 	onClineSettingsChange?: (value: RuntimeTaskClineSettings | undefined) => void;
+	customArgs?: string[] | undefined;
+	onCustomArgsChange?: (value: string[] | undefined) => void;
 	agentOptions: Array<{ value: string; label: string }>;
 	clineProviderOptions: Array<{ value: string; label: string }>;
 	clineModelOptions: Array<{ value: string; label: string }>;
@@ -278,6 +282,7 @@ export function TaskAgentModelPicker({
 	// (either explicitly overridden to cline, or defaulting to cline)
 	const effectiveAgentId = agentId ?? defaultAgentId ?? null;
 	const showClineProviderPicker = effectiveAgentId === "cline";
+	const showCustomArgsInput = effectiveAgentId !== "cline" && effectiveAgentId !== null;
 
 	// Show the Cline model picker when a provider is effectively selected
 	// (either explicitly overridden, or the global default provider is set)
@@ -486,6 +491,25 @@ export function TaskAgentModelPicker({
 								))}
 							</NativeSelect>
 						</div>
+						{showCustomArgsInput ? (
+							<div className="w-full sm:w-1/2 min-w-0">
+								<span className="text-[11px] text-text-secondary block mb-1">Custom Arguments</span>
+								<input
+									type="text"
+									placeholder="--verbose --model gpt-4"
+									value={customArgs?.join(" ") ?? ""}
+									onChange={(e) => {
+										const value = e.currentTarget.value.trim();
+										const args = value.length > 0 ? value.split(/\s+/) : undefined;
+										onCustomArgsChange?.(args);
+									}}
+									className="w-full px-2 py-1 text-[12px] bg-surface-2 border border-border rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
+								/>
+								<span className="text-[10px] text-text-tertiary block mt-1">
+									Space-separated extra arguments passed to the agent CLI.
+								</span>
+							</div>
+						) : null}
 						{showClineProviderPicker ? (
 							<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 								<div className="min-w-0">

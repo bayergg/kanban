@@ -28,6 +28,7 @@ export interface TaskDraft {
 	images?: TaskImage[];
 	agentId?: RuntimeAgentId;
 	clineSettings?: RuntimeTaskClineSettings;
+	customArgs?: string[];
 	baseRef: string;
 }
 
@@ -344,6 +345,7 @@ export function addTaskToColumnWithResult(
 			images: draft.images,
 			agentId: draft.agentId,
 			clineSettings: draft.clineSettings,
+			customArgs: draft.customArgs,
 			baseRef: draft.baseRef,
 		},
 		createBrowserUuid,
@@ -542,6 +544,7 @@ export function updateTask(board: BoardData, taskId: string, draft: TaskDraft): 
 							: undefined,
 				agentId: draft.agentId,
 				clineSettings: draft.clineSettings,
+				customArgs: draft.customArgs,
 				baseRef,
 				updatedAt: Date.now(),
 			};
@@ -573,6 +576,7 @@ export function updateTaskTitle(
 		images: selection.card.images,
 		agentId: selection.card.agentId,
 		clineSettings: selection.card.clineSettings,
+		customArgs: selection.card.customArgs,
 		baseRef: selection.card.baseRef,
 	});
 }
@@ -604,6 +608,7 @@ export function applyTaskDetailClineSettingsSelection(
 		images: selection.card.images,
 		agentId: settings.agentId,
 		clineSettings: settings.clineSettings ?? undefined,
+		customArgs: selection.card.customArgs,
 		baseRef: selection.card.baseRef,
 	});
 }
@@ -662,6 +667,7 @@ export function disableTaskAutoReview(board: BoardData, taskId: string): { board
 		images: selection.card.images,
 		agentId: selection.card.agentId,
 		clineSettings: selection.card.clineSettings,
+		customArgs: selection.card.customArgs,
 		baseRef: selection.card.baseRef,
 	});
 }
