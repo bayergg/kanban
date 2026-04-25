@@ -44,6 +44,8 @@ function createRuntimeConfigResponse(
 			},
 		],
 		shortcuts: [],
+		isRemoteMode: false,
+		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: "cline",
 			modelId: "sonnet",

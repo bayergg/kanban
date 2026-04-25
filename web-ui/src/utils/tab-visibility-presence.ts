@@ -2,6 +2,7 @@ import { generateUuid } from "@runtime-uuid";
 import { LocalStorageKey, readLocalStorageItem, writeLocalStorageItem } from "@/storage/local-storage-store";
 
 const TAB_VISIBILITY_STALE_MS = 15000;
+const TAB_VISIBILITY_PRESENCE_STORAGE_KEY = LocalStorageKey.TabVisibilityPresence;
 
 interface TabVisibilityPresenceEntry {
 	workspaceId: string;

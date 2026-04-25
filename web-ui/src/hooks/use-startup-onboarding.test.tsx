@@ -36,6 +36,8 @@ function createRuntimeConfigResponse(selectedAgentId: RuntimeConfigResponse["sel
 			},
 		],
 		shortcuts: [],
+		isRemoteMode: false,
+		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: null,
 			modelId: null,

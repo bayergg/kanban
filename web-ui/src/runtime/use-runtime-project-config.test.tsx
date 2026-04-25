@@ -55,6 +55,8 @@ function createRuntimeConfigResponse(
 			},
 		],
 		shortcuts,
+		isRemoteMode: false,
+		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: null,
 			modelId: null,

@@ -88,6 +88,8 @@ function createRuntimeConfigResponse(
 			},
 		],
 		shortcuts: [],
+		isRemoteMode: false,
+		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: "cline",
 			modelId: "claude-sonnet-4-6",

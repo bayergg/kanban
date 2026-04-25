@@ -4,16 +4,20 @@
  */
 export function generateUuid(): string {
 	// 1. Try standard Web Crypto randomUUID
-	if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-		return crypto.randomUUID();
+	const c = typeof crypto !== "undefined" ? crypto : undefined;
+	if (c && typeof c.randomUUID === "function") {
+		return c.randomUUID();
 	}
 
 	// 2. Fallback to getRandomValues for older browsers/environments
-	if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+	if (c && typeof c.getRandomValues === "function") {
 		// @ts-expect-error - common UUID v4 generation using getRandomValues
-		return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
-			(c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16),
-		);
+		return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (ch) => {
+			const arr = new Uint8Array(1);
+			c.getRandomValues(arr);
+			const val = arr[0] ?? 0;
+			return (Number.parseInt(ch, 10) ^ (val & (15 >> (Number.parseInt(ch, 10) / 4)))).toString(16);
+		});
 	}
 
 	// 3. Last resort fallback (not cryptographically secure)
