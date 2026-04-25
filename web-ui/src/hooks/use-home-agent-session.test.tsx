@@ -68,6 +68,8 @@ function createRuntimeConfig(overrides: Partial<RuntimeConfigResponse> = {}): Ru
 		globalConfigPath: "/tmp/global-config.json",
 		projectConfigPath: "/tmp/project-config.json",
 		readyForReviewNotificationsEnabled: true,
+		isRemoteMode: overrides.isRemoteMode ?? false,
+		passcodeEnabled: overrides.passcodeEnabled ?? false,
 		detectedCommands: ["codex", "claude", "cline"],
 		agents: [
 			{
@@ -99,8 +101,6 @@ function createRuntimeConfig(overrides: Partial<RuntimeConfigResponse> = {}): Ru
 			},
 		],
 		shortcuts: [],
-		isRemoteMode: false,
-		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: "anthropic",
 			modelId: "claude-sonnet-4-6",

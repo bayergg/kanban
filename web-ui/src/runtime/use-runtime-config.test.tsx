@@ -23,6 +23,8 @@ function createRuntimeConfigResponse(selectedAgentId: RuntimeConfigResponse["sel
 		globalConfigPath: "/tmp/global-config.json",
 		projectConfigPath: "/tmp/project/.cline/kanban/config.json",
 		readyForReviewNotificationsEnabled: true,
+		isRemoteMode: false,
+		passcodeEnabled: false,
 		detectedCommands: [selectedAgentId],
 		agents: [
 			{
@@ -45,8 +47,6 @@ function createRuntimeConfigResponse(selectedAgentId: RuntimeConfigResponse["sel
 			},
 		],
 		shortcuts: [],
-		isRemoteMode: false,
-		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: null,
 			modelId: null,

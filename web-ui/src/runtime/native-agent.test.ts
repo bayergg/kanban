@@ -22,6 +22,8 @@ function createRuntimeConfigResponse(
 		globalConfigPath: "/tmp/global-config.json",
 		projectConfigPath: "/tmp/project/.cline/kanban/config.json",
 		readyForReviewNotificationsEnabled: true,
+		isRemoteMode: overrides?.isRemoteMode ?? false,
+		passcodeEnabled: overrides?.passcodeEnabled ?? false,
 		detectedCommands: ["claude", "codex"],
 		agents: [
 			{
@@ -44,8 +46,6 @@ function createRuntimeConfigResponse(
 			},
 		],
 		shortcuts: [],
-		isRemoteMode: false,
-		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: "cline",
 			modelId: "sonnet",

@@ -75,6 +75,8 @@ function createRuntimeConfigResponse(
 		globalConfigPath: "/tmp/global-config.json",
 		projectConfigPath: "/tmp/project/.cline/kanban/config.json",
 		readyForReviewNotificationsEnabled: true,
+		isRemoteMode: false,
+		passcodeEnabled: false,
 		detectedCommands: ["cline"],
 		agents: [
 			{
@@ -88,8 +90,6 @@ function createRuntimeConfigResponse(
 			},
 		],
 		shortcuts: [],
-		isRemoteMode: false,
-		passcodeEnabled: false,
 		clineProviderSettings: {
 			providerId: "cline",
 			modelId: "claude-sonnet-4-6",
