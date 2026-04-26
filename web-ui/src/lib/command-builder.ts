@@ -5,7 +5,6 @@ export interface CommandOptions {
 	provider?: string;
 	model?: string;
 	agent?: string;
-	profile?: string;
 	flags: Record<string, boolean | string | number | undefined>;
 }
 
@@ -33,7 +32,7 @@ export function validateCommandOptions(options: CommandOptions): ValidationResul
 }
 
 export function buildCommand(options: CommandOptions): string {
-	const { format, provider, model, agent, profile, flags } = options;
+	const { format, provider, model, agent, flags } = options;
 	const parts: string[] = [];
 
 	if (format === "opencode") {
@@ -49,10 +48,6 @@ export function buildCommand(options: CommandOptions): string {
 		parts.push("gemini");
 	} else if (format === "codex") {
 		parts.push("codex");
-		if (profile) {
-			parts.push("--profile");
-			parts.push(profile);
-		}
 	}
 
 	// Add flags

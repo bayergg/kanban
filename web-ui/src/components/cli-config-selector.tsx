@@ -66,14 +66,12 @@ export function CLIConfigSelector() {
 	const [provider, setProvider] = useState("");
 	const [model, setModel] = useState("");
 	const [agent, setAgent] = useState("");
-	const [profile, setProfile] = useState("");
 	const [temperature, setTemperature] = useState(0.7);
 	const [permissionConfig, setPermissionConfig] = useState<PermissionConfig>(PERMISSION_DEFAULTS);
 
 	const [providers, setProviders] = useState<OpenCodeProvider[]>([]);
 	const [models, setModels] = useState<OpenCodeModel[]>([]);
 	const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
-	const [profiles, setProfiles] = useState<CodexProfile[]>([]);
 
 	// Mock loading data
 	useEffect(() => {
@@ -96,12 +94,6 @@ export function CLIConfigSelector() {
 					{ id: "claude", name: "Claude" },
 					{ id: "codex", name: "Codex" },
 				]);
-			} else if (format === "codex") {
-				setProfiles([
-					{ id: "default", name: "Default Profile" },
-					{ id: "work", name: "Work Profile" },
-					{ id: "personal", name: "Personal Profile" },
-				]);
 			}
 		}, 500);
 		return () => clearTimeout(timer);
@@ -118,7 +110,6 @@ export function CLIConfigSelector() {
 		setProvider("");
 		setModel("");
 		setAgent("");
-		setProfile("");
 	};
 
 	const filteredModels = useMemo(() => {
@@ -146,10 +137,9 @@ export function CLIConfigSelector() {
 			provider,
 			model,
 			agent,
-			profile,
 			flags,
 		};
-	}, [format, provider, model, agent, profile, permissionConfig, temperature]);
+	}, [format, provider, model, agent, permissionConfig, temperature]);
 
 	return (
 		<div className="flex flex-col gap-8 max-w-2xl mx-auto p-6">
@@ -289,25 +279,6 @@ export function CLIConfigSelector() {
 								</div>
 							</div>
 						</>
-					)}
-
-					{format === "codex" && (
-						<div className="space-y-2">
-							<label
-								htmlFor="codex-profile"
-								className="text-xs font-bold text-text-tertiary uppercase tracking-wider"
-							>
-								Profile
-							</label>
-							<NativeSelect id="codex-profile" value={profile} onChange={(e) => setProfile(e.target.value)} fill>
-								<option value="">Select Profile...</option>
-								{profiles.map((p) => (
-									<option key={p.id} value={p.id}>
-										{p.name}
-									</option>
-								))}
-							</NativeSelect>
-						</div>
 					)}
 				</div>
 

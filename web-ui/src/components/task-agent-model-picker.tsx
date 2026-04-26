@@ -288,7 +288,7 @@ export function TaskAgentModelPicker({
 		effectiveAgentId === "gemini" || effectiveAgentId === "codex" || effectiveAgentId === "opencode";
 
 	const handleAgentSelectorChange = useCallback(
-		(selection: { agentId?: string; providerId?: string; modelId?: string; profileId?: string }) => {
+		(selection: { agentId?: string; providerId?: string; modelId?: string }) => {
 			const args: string[] = [];
 			if (effectiveAgentId === "gemini") {
 				if (selection.modelId) args.push("--model", selection.modelId);

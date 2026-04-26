@@ -44,12 +44,12 @@ export function useOpenCodeModels(providerId: string | null) {
 					];
 				} else if (providerId.startsWith("minimax")) {
 					mockModels = [
-						{ id: `${providerId}/MiniMax-M2`, name: "M2", provider: providerId },
-						{ id: `${providerId}/MiniMax-M2.1`, name: "M2.1", provider: providerId },
-						{ id: `${providerId}/MiniMax-M2.5`, name: "M2.5", provider: providerId },
-						{ id: `${providerId}/MiniMax-M2.5-highspeed`, name: "M2.5 High-speed", provider: providerId },
-						{ id: `${providerId}/MiniMax-M2.7`, name: "M2.7", provider: providerId },
-						{ id: `${providerId}/MiniMax-M2.7-highspeed`, name: "M2.7 High-speed", provider: providerId },
+						{ id: `${providerId}/MiniMax-M2`, name: "MiniMax M2", provider: providerId },
+						{ id: `${providerId}/MiniMax-M2.1`, name: "MiniMax M2.1", provider: providerId },
+						{ id: `${providerId}/MiniMax-M2.5`, name: "MiniMax M2.5", provider: providerId },
+						{ id: `${providerId}/MiniMax-M2.5-highspeed`, name: "MiniMax M2.5 Highspeed", provider: providerId },
+						{ id: `${providerId}/MiniMax-M2.7`, name: "MiniMax M2.7", provider: providerId },
+						{ id: `${providerId}/MiniMax-M2.7-highspeed`, name: "MiniMax M2.7 Highspeed", provider: providerId },
 					];
 				} else {
 					mockModels = [{ id: `${providerId}/default`, name: "Default Model", provider: providerId }];

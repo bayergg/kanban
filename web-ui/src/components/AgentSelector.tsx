@@ -37,6 +37,13 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 		}
 	}, [cli, openCodeProviders, selectedOpenCodeProvider]);
 
+	// Auto-select first model when OpenCode models are loaded
+	useEffect(() => {
+		if (cli === "opencode" && openCodeModels.length > 0 && !selectedOpenCodeModel) {
+			setSelectedOpenCodeModel(openCodeModels[0]!.id);
+		}
+	}, [cli, openCodeModels, selectedOpenCodeModel]);
+
 	// Handle provider change resets
 	const handleOpenCodeProviderChange = (value: string) => {
 		setSelectedOpenCodeProvider(value);
