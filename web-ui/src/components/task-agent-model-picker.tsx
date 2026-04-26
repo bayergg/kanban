@@ -515,34 +515,26 @@ export function TaskAgentModelPicker({
 								))}
 							</NativeSelect>
 						</div>
-						{showCustomArgsInput ? (
+						{showCustomArgsInput && isAgentSelectorSupported ? (
+							<AgentSelector cli={effectiveAgentId as CLIId} onSelectionChange={handleAgentSelectorChange} />
+						) : null}
+						{showCustomArgsInput && !isAgentSelectorSupported ? (
 							<div className="w-full sm:w-1/2 min-w-0">
-								{isAgentSelectorSupported ? (
-									<div className="mt-2">
-										<AgentSelector
-											cli={effectiveAgentId as CLIId}
-											onSelectionChange={handleAgentSelectorChange}
-										/>
-									</div>
-								) : (
-									<>
-										<span className="text-[11px] text-text-secondary block mb-1">Custom Arguments</span>
-										<input
-											type="text"
-											placeholder="--verbose --model gpt-4"
-											value={customArgs?.join(" ") ?? ""}
-											onChange={(e) => {
-												const value = e.currentTarget.value.trim();
-												const args = value.length > 0 ? value.split(/\s+/) : undefined;
-												onCustomArgsChange?.(args);
-											}}
-											className="w-full px-2 py-1 text-[12px] bg-surface-2 border border-border rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
-										/>
-										<span className="text-[10px] text-text-tertiary block mt-1">
-											Space-separated extra arguments passed to the agent CLI.
-										</span>
-									</>
-								)}
+								<span className="text-[11px] text-text-secondary block mb-1">Custom Arguments</span>
+								<input
+									type="text"
+									placeholder="--verbose --model gpt-4"
+									value={customArgs?.join(" ") ?? ""}
+									onChange={(e) => {
+										const value = e.currentTarget.value.trim();
+										const args = value.length > 0 ? value.split(/\s+/) : undefined;
+										onCustomArgsChange?.(args);
+									}}
+									className="w-full px-2 py-1 text-[12px] bg-surface-2 border border-border rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
+								/>
+								<span className="text-[10px] text-text-tertiary block mt-1">
+									Space-separated extra arguments passed to the agent CLI.
+								</span>
 							</div>
 						) : null}
 						{showClineProviderPicker ? (

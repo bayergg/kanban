@@ -1,5 +1,5 @@
 import * as Select from "@radix-ui/react-select";
-import { Check, ChevronDown, Cpu, Globe, Loader2, User } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { CODEX_MODELS, CODEX_PROVIDERS, GEMINI_MODELS, OPENCODE_AGENTS } from "../data/cli-models";
@@ -92,31 +92,26 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 	}, [selectedCodexProvider]);
 
 	return (
-		<div className="flex flex-col gap-4 p-4 rounded-lg bg-surface-1 border border-border shadow-sm max-w-md">
-			<div className="flex items-center gap-2 mb-1">
-				<Cpu size={16} className="text-accent" />
-				<span className="text-xs font-bold uppercase tracking-wider text-text-secondary">{cli} Configuration</span>
-			</div>
-
-			<div className="grid grid-cols-1 gap-3">
-				{/* --- OPENCODE UI --- */}
-				{cli === "opencode" && (
-					<>
+		<div className="flex flex-col gap-2 w-full mt-2">
+			{/* --- OPENCODE UI --- */}
+			{cli === "opencode" && (
+				<>
+					<div className="w-full sm:w-1/2 min-w-0">
 						<SelectorField
 							label="Agent"
 							value={selectedAgent}
 							onValueChange={setSelectedAgent}
 							options={OPENCODE_AGENTS.map((a) => ({ id: a.id, name: `${a.name} (${a.type})` }))}
-							icon={<User size={14} />}
 						/>
+					</div>
 
+					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 						<SelectorField
 							label="Provider"
 							value={selectedOpenCodeProvider || ""}
 							onValueChange={handleOpenCodeProviderChange}
 							options={openCodeProviders}
 							isLoading={isLoadingProviders}
-							icon={<Globe size={14} />}
 						/>
 
 						<SelectorField
@@ -126,46 +121,42 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 							options={openCodeModels}
 							isLoading={isLoadingModels}
 							disabled={!selectedOpenCodeProvider}
-							placeholder="Select a model..."
-							icon={<Cpu size={14} />}
+							placeholder="Select model..."
 						/>
-					</>
-				)}
+					</div>
+				</>
+			)}
 
-				{/* --- GEMINI UI --- */}
-				{cli === "gemini" && (
-					<>
-						<SelectorField
-							label="Model"
-							value={selectedGeminiModel}
-							onValueChange={setSelectedGeminiModel}
-							options={GEMINI_MODELS}
-							icon={<Cpu size={14} />}
-						/>
-					</>
-				)}
+			{/* --- GEMINI UI --- */}
+			{cli === "gemini" && (
+				<div className="w-full sm:w-1/2 min-w-0">
+					<SelectorField
+						label="Model"
+						value={selectedGeminiModel}
+						onValueChange={setSelectedGeminiModel}
+						options={GEMINI_MODELS}
+					/>
+				</div>
+			)}
 
-				{/* --- CODEX UI --- */}
-				{cli === "codex" && (
-					<>
-						<SelectorField
-							label="Provider"
-							value={selectedCodexProvider}
-							onValueChange={handleCodexProviderChange}
-							options={CODEX_PROVIDERS}
-							icon={<Globe size={14} />}
-						/>
+			{/* --- CODEX UI --- */}
+			{cli === "codex" && (
+				<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+					<SelectorField
+						label="Provider"
+						value={selectedCodexProvider}
+						onValueChange={handleCodexProviderChange}
+						options={CODEX_PROVIDERS}
+					/>
 
-						<SelectorField
-							label="Model"
-							value={selectedCodexModel}
-							onValueChange={setSelectedCodexModel}
-							options={filteredCodexModels}
-							icon={<Cpu size={14} />}
-						/>
-					</>
-				)}
-			</div>
+					<SelectorField
+						label="Model"
+						value={selectedCodexModel}
+						onValueChange={setSelectedCodexModel}
+						options={filteredCodexModels}
+					/>
+				</div>
+			)}
 		</div>
 	);
 };
@@ -178,7 +169,6 @@ interface SelectorFieldProps {
 	isLoading?: boolean;
 	disabled?: boolean;
 	placeholder?: string;
-	icon?: React.ReactNode;
 }
 
 const SelectorField: React.FC<SelectorFieldProps> = ({
@@ -189,53 +179,53 @@ const SelectorField: React.FC<SelectorFieldProps> = ({
 	isLoading,
 	disabled,
 	placeholder = "Select...",
-	icon,
 }) => {
 	const id = useId();
 	return (
-		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className="text-xs font-medium text-text-secondary px-1">
+		<div className="flex flex-col gap-1">
+			<label htmlFor={id} className="text-[11px] text-text-secondary block">
 				{label}
 			</label>
 
 			<Select.Root value={value} onValueChange={onValueChange} disabled={disabled || isLoading}>
 				<Select.Trigger
 					id={id}
-					className="flex items-center justify-between h-9 px-3 rounded-md bg-surface-2 border border-border hover:border-border-bright focus:outline-none focus:ring-1 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm text-text-primary"
+					className="flex items-center justify-between h-8 px-2 rounded-md bg-surface-2 border border-border-bright hover:border-border-focus focus:outline-none focus:ring-1 focus:ring-accent transition-all disabled:opacity-40 disabled:cursor-not-allowed text-[12px] text-text-primary w-full"
 				>
 					<div className="flex items-center gap-2 truncate">
-						{icon && <span className="text-text-tertiary">{icon}</span>}
-						<Select.Value placeholder={placeholder}>{options.find((opt) => opt.id === value)?.name}</Select.Value>
+						<Select.Value placeholder={placeholder}>
+							{options.find((opt) => opt.id === value)?.name || placeholder}
+						</Select.Value>
 					</div>
 					<Select.Icon>
 						{isLoading ? (
-							<Loader2 size={14} className="animate-spin text-text-tertiary" />
+							<Loader2 size={12} className="animate-spin text-text-tertiary" />
 						) : (
-							<ChevronDown size={14} className="text-text-tertiary" />
+							<ChevronDown size={12} className="text-text-tertiary" />
 						)}
 					</Select.Icon>
 				</Select.Trigger>
 
 				<Select.Portal>
 					<Select.Content
-						className="z-50 min-w-[200px] overflow-hidden rounded-md border border-border-bright bg-surface-3 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+						className="z-[100] min-w-[200px] overflow-hidden rounded-md border border-border-bright bg-surface-3 shadow-xl animate-in fade-in zoom-in-95 duration-100"
 						position="popper"
 						side="bottom"
 						sideOffset={4}
 					>
 						<Select.Viewport className="p-1">
 							{options.length === 0 && !isLoading && (
-								<div className="py-2 px-3 text-xs text-text-tertiary italic">No options available</div>
+								<div className="py-2 px-3 text-[11px] text-text-tertiary italic">No options available</div>
 							)}
 							{options.map((option) => (
 								<Select.Item
 									key={option.id}
 									value={option.id}
-									className="relative flex items-center h-8 px-8 rounded-sm text-sm text-text-primary select-none hover:bg-accent hover:text-accent-fg outline-none data-[state=checked]:bg-surface-4 data-[state=checked]:text-accent focus:bg-accent focus:text-accent-fg cursor-pointer transition-colors"
+									className="relative flex items-center h-8 px-8 rounded-sm text-[12px] text-text-primary select-none hover:bg-accent hover:text-white outline-none data-[state=checked]:bg-surface-4 data-[state=checked]:text-accent focus:bg-accent focus:text-white cursor-pointer transition-colors"
 								>
 									<Select.ItemText>{option.name}</Select.ItemText>
-									<Select.ItemIndicator className="absolute left-2 inline-flex items-center justify-center">
-										<Check size={14} />
+									<Select.ItemIndicator className="absolute left-2 inline-flex items-center justify-center text-accent">
+										<Check size={12} />
 									</Select.ItemIndicator>
 								</Select.Item>
 							))}

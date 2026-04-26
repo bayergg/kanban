@@ -31,6 +31,11 @@ export const CODEX_PROVIDERS: Provider[] = [
 ];
 
 export const CODEX_MODELS: Model[] = [
+	{ id: "gpt-5.5", name: "gpt-5.5", provider: "openai" },
+	{ id: "gpt-5.4", name: "gpt-5.4", provider: "openai" },
+	{ id: "gpt-5.4-mini", name: "gpt-5.4-mini", provider: "openai" },
+	{ id: "gpt-5.3-codex", name: "gpt-5.3-codex", provider: "openai" },
+	{ id: "gpt-5.2", name: "gpt-5.2", provider: "openai" },
 	{ id: "gpt-4o", name: "GPT-4o", provider: "openai" },
 	{ id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai" },
 	{ id: "o1", name: "o1", provider: "openai" },

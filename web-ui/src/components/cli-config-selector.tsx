@@ -1,9 +1,7 @@
-import { Bot, Code2, Terminal } from "lucide-react";
+import { Bot, ChevronDown, Code2, Info, Shield, ShieldAlert, ShieldCheck, Terminal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { CommandFormat, CommandOptions } from "../lib/command-builder";
-// import { PERMISSION_DEFAULTS, type PermissionConfig } from "../lib/permission-config";
 import { CommandPreview } from "./command-preview";
-// import { PermissionFlags } from "./permission-flags";
 import { cn } from "./ui/cn";
 import { NativeSelect } from "./ui/native-select";
 
@@ -22,6 +20,7 @@ export interface PermissionConfig {
 		sandboxMode: string;
 	};
 }
+
 export const PERMISSION_DEFAULTS: PermissionConfig = {
 	openCode: {
 		dangerouslySkipPermissions: false,
@@ -36,13 +35,149 @@ export const PERMISSION_DEFAULTS: PermissionConfig = {
 		sandboxMode: "isolated",
 	},
 };
+
+const SettingItem = ({
+	label,
+	description,
+	children,
+	icon: Icon,
+}: {
+	label: string;
+	description?: string;
+	children: React.ReactNode;
+	icon?: any;
+}) => (
+	<div className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+		<div className="flex-1 min-w-0">
+			<div className="flex items-center gap-2 mb-0.5">
+				{Icon && <Icon size={14} className="text-text-tertiary flex-shrink-0" />}
+				<span className="text-[13px] font-medium text-text-primary truncate">{label}</span>
+			</div>
+			{description && <p className="text-[11px] text-text-tertiary leading-normal">{description}</p>}
+		</div>
+		<div className="flex-shrink-0">{children}</div>
+	</div>
+);
+
+const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) => (
+	<button
+		type="button"
+		onClick={() => onChange(!enabled)}
+		className={cn(
+			"relative inline-flex h-4.5 w-8 items-center rounded-full transition-all focus:outline-none",
+			enabled ? "bg-accent" : "bg-[#3e3e42]",
+		)}
+	>
+		<span
+			className={cn(
+				"inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ease-in-out shadow-sm",
+				enabled ? "translate-x-4.5" : "translate-x-0.5",
+			)}
+		/>
+	</button>
+);
+
 const PermissionFlags = ({
+	format,
 	config,
 	onChange,
 }: {
+	format: CommandFormat;
 	config: PermissionConfig;
 	onChange: (c: PermissionConfig) => void;
-}) => <div className="p-2 border rounded">Permission Flags Mock</div>;
+}) => {
+	const updateConfig = (section: keyof PermissionConfig, key: string, value: any) => {
+		onChange({
+			...config,
+			[section]: {
+				...config[section],
+				[key]: value,
+			},
+		});
+	};
+
+	return (
+		<div className="bg-[#1e1e1e] rounded-lg border border-[#333333] shadow-sm overflow-hidden">
+			<div className="px-3.5 py-2.5 bg-[#252526] border-b border-[#333333] flex items-center justify-between">
+				<div className="flex items-center gap-2">
+					<Shield size={14} className="text-accent" />
+					<span className="text-[11px] font-bold uppercase tracking-wider text-[#cccccc]">
+						Agent Settings Overrides
+					</span>
+				</div>
+				<div className="flex items-center gap-1.5 text-[10px] text-[#888888] font-medium bg-[#1a1a1a] px-2 py-0.5 rounded-full border border-[#333333]">
+					<Info size={11} />
+					<span>Cline Runtime Mode</span>
+				</div>
+			</div>
+			<div className="px-4 py-1 divide-y divide-[#333333]">
+				{format === "opencode" && (
+					<SettingItem
+						label="Dangerously Skip Permissions"
+						description="Bypass user confirmation for file & terminal operations."
+						icon={ShieldAlert}
+					>
+						<Toggle
+							enabled={config.openCode.dangerouslySkipPermissions}
+							onChange={(v) => updateConfig("openCode", "dangerouslySkipPermissions", v)}
+						/>
+					</SettingItem>
+				)}
+
+				{format === "gemini" && (
+					<>
+						<SettingItem
+							label="YOLO Mode"
+							description="Execute immediately without waiting for user approval."
+							icon={ShieldAlert}
+						>
+							<Toggle enabled={config.gemini.yolo} onChange={(v) => updateConfig("gemini", "yolo", v)} />
+						</SettingItem>
+						<SettingItem
+							label="Sandbox Execution"
+							description="Run in isolated environment for enhanced security."
+							icon={ShieldCheck}
+						>
+							<Toggle enabled={config.gemini.sandbox} onChange={(v) => updateConfig("gemini", "sandbox", v)} />
+						</SettingItem>
+					</>
+				)}
+
+				{format === "codex" && (
+					<>
+						<SettingItem
+							label="Bypass Security Boundaries"
+							description="Disables all security gates and approval flows."
+							icon={ShieldAlert}
+						>
+							<Toggle
+								enabled={config.codex.dangerouslyBypassApprovalsAndSandbox}
+								onChange={(v) => updateConfig("codex", "dangerouslyBypassApprovalsAndSandbox", v)}
+							/>
+						</SettingItem>
+						<SettingItem label="Approval Policy" description="Configure strictness of human oversight.">
+							<div className="relative">
+								<select
+									className="appearance-none bg-[#2d2d2d] border border-[#454545] rounded-md pl-2 pr-7 py-1 text-[11px] text-[#cccccc] focus:outline-none focus:border-accent min-w-[90px]"
+									value={config.codex.approvalPolicy}
+									onChange={(e) => updateConfig("codex", "approvalPolicy", e.target.value)}
+								>
+									<option value="strict">Strict</option>
+									<option value="standard">Standard</option>
+									<option value="relaxed">Relaxed</option>
+								</select>
+								<ChevronDown
+									size={10}
+									className="absolute right-2 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none"
+								/>
+							</div>
+						</SettingItem>
+					</>
+				)}
+			</div>
+		</div>
+	);
+};
 
 // Placeholder types for demo/testing
 export interface OpenCodeProvider {
@@ -72,6 +207,8 @@ export function CLIConfigSelector() {
 	const [providers, setProviders] = useState<OpenCodeProvider[]>([]);
 	const [models, setModels] = useState<OpenCodeModel[]>([]);
 	const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
+	const [profiles, setProfiles] = useState<CodexProfile[]>([]);
+	const [profile, setProfile] = useState("");
 
 	// Mock loading data
 	useEffect(() => {
@@ -94,6 +231,12 @@ export function CLIConfigSelector() {
 					{ id: "claude", name: "Claude" },
 					{ id: "codex", name: "Codex" },
 				]);
+			} else if (format === "codex") {
+				setProfiles([
+					{ id: "default", name: "Default Profile" },
+					{ id: "work", name: "Work Profile" },
+					{ id: "personal", name: "Personal Profile" },
+				]);
 			}
 		}, 500);
 		return () => clearTimeout(timer);
@@ -102,7 +245,7 @@ export function CLIConfigSelector() {
 	// Reset model when provider changes
 	useEffect(() => {
 		setModel("");
-	}, [provider]);
+	}, [provider, format]);
 
 	// Reset fields when format changes
 	const handleFormatChange = (newFormat: CommandFormat) => {
@@ -110,6 +253,7 @@ export function CLIConfigSelector() {
 		setProvider("");
 		setModel("");
 		setAgent("");
+		setProfile("");
 	};
 
 	const filteredModels = useMemo(() => {
@@ -137,9 +281,10 @@ export function CLIConfigSelector() {
 			provider,
 			model,
 			agent,
+			profile,
 			flags,
 		};
-	}, [format, provider, model, agent, permissionConfig, temperature]);
+	}, [format, provider, model, agent, profile, permissionConfig, temperature]);
 
 	return (
 		<div className="flex flex-col gap-8 max-w-2xl mx-auto p-6">
@@ -148,7 +293,7 @@ export function CLIConfigSelector() {
 					<Terminal size={20} className="text-accent" />
 					CLI Configuration
 				</h2>
-				<p className="text-sm text-text-secondary">
+				<p className="text-sm text-text-secondary leading-relaxed">
 					Select your preferred AI CLI and configure its execution environment and safety flags.
 				</p>
 			</div>
@@ -280,9 +425,51 @@ export function CLIConfigSelector() {
 							</div>
 						</>
 					)}
+
+					{format === "codex" && (
+						<>
+							<div className="space-y-2">
+								<label
+									htmlFor="codex-model"
+									className="text-xs font-bold text-text-tertiary uppercase tracking-wider"
+								>
+									Model
+								</label>
+								<NativeSelect id="codex-model" value={model} onChange={(e) => setModel(e.target.value)} fill>
+									<option value="">Select Model...</option>
+									<option value="gpt-5.5">gpt-5.5</option>
+									<option value="gpt-5.4">gpt-5.4</option>
+									<option value="gpt-5.4-mini">gpt-5.4-mini</option>
+									<option value="gpt-5.3-codex">gpt-5.3-codex</option>
+									<option value="gpt-5.2">gpt-5.2</option>
+								</NativeSelect>
+							</div>
+							<div className="space-y-2">
+								<label
+									htmlFor="codex-profile"
+									className="text-xs font-bold text-text-tertiary uppercase tracking-wider"
+								>
+									Profile
+								</label>
+								<NativeSelect
+									id="codex-profile"
+									value={profile}
+									onChange={(e) => setProfile(e.target.value)}
+									fill
+								>
+									<option value="">Select Profile...</option>
+									{profiles.map((p) => (
+										<option key={p.id} value={p.id}>
+											{p.name}
+										</option>
+									))}
+								</NativeSelect>
+							</div>
+						</>
+					)}
 				</div>
 
-				<PermissionFlags config={permissionConfig} onChange={setPermissionConfig} />
+				<PermissionFlags format={format} config={permissionConfig} onChange={setPermissionConfig} />
 
 				<CommandPreview options={commandOptions} />
 			</div>
