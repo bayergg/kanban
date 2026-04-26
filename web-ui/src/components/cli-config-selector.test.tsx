@@ -53,6 +53,7 @@ describe("CLIConfigSelector", () => {
 		// Select OpenAI
 		const selects = container.querySelectorAll("select");
 		const providerSelect = selects[0];
+		if (!providerSelect) throw new Error("providerSelect not found");
 
 		await act(async () => {
 			providerSelect.value = "openai";
@@ -62,6 +63,7 @@ describe("CLIConfigSelector", () => {
 		await waitFor(100);
 
 		const modelSelect = container.querySelectorAll("select")[1];
+		if (!modelSelect) throw new Error("modelSelect not found");
 		await act(async () => {
 			modelSelect.value = "gpt-4";
 			modelSelect.dispatchEvent(new Event("change", { bubbles: true }));

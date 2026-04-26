@@ -7,6 +7,7 @@ import { Command, Option } from "commander";
 import ora, { type Ora } from "ora";
 import packageJson from "../package.json" with { type: "json" };
 import { disposeCliTelemetryService } from "./cline-sdk/cline-telemetry-service.js";
+import { registerDaemonCommand } from "./commands/daemon";
 import { registerHooksCommand } from "./commands/hooks";
 import { registerTaskCommand } from "./commands/task";
 import { loadGlobalRuntimeConfig, loadRuntimeConfig } from "./config/runtime-config";
@@ -222,14 +223,14 @@ async function resolveRuntimeTls(options: CliOptions): Promise<TlsResult> {
 	return { enabled: true };
 }
 
-async function assertPathIsDirectory(path: string): Promise<void> {
+export async function assertPathIsDirectory(path: string): Promise<void> {
 	const info = await stat(path);
 	if (!info.isDirectory()) {
 		throw new Error(`Project path is not a directory: ${path}`);
 	}
 }
 
-async function pathIsDirectory(path: string): Promise<boolean> {
+export async function pathIsDirectory(path: string): Promise<boolean> {
 	try {
 		const info = await stat(path);
 		return info.isDirectory();
@@ -238,7 +239,7 @@ async function pathIsDirectory(path: string): Promise<boolean> {
 	}
 }
 
-function hasGitRepository(path: string): boolean {
+export function hasGitRepository(path: string): boolean {
 	const result = spawnSync("git", ["rev-parse", "--is-inside-work-tree"], {
 		cwd: path,
 		encoding: "utf8",
@@ -314,7 +315,7 @@ async function tryOpenExistingServer(options: { noOpen: boolean; shouldAutoOpenB
 	return true;
 }
 
-async function runScopedCommand(command: string, cwd: string): Promise<RuntimeCommandRunResponse> {
+export async function runScopedCommand(command: string, cwd: string): Promise<RuntimeCommandRunResponse> {
 	const startedAt = Date.now();
 	const outputLimitBytes = 64 * 1024;
 
@@ -705,6 +706,7 @@ function createProgram(invocationArgs: string[]): Command {
 
 	registerTaskCommand(program);
 	registerHooksCommand(program);
+	registerDaemonCommand(program);
 
 	program
 		.command("mcp")

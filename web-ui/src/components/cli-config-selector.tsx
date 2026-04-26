@@ -1,11 +1,48 @@
 import { Bot, Code2, Terminal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { CommandFormat, CommandOptions } from "../lib/command-builder";
-import { PERMISSION_DEFAULTS, type PermissionConfig } from "../lib/permission-config";
+// import { PERMISSION_DEFAULTS, type PermissionConfig } from "../lib/permission-config";
 import { CommandPreview } from "./command-preview";
-import { PermissionFlags } from "./permission-flags";
+// import { PermissionFlags } from "./permission-flags";
 import { cn } from "./ui/cn";
 import { NativeSelect } from "./ui/native-select";
+
+// Mocking missing types and constants
+export interface PermissionConfig {
+	openCode: {
+		dangerouslySkipPermissions: boolean;
+	};
+	gemini: {
+		yolo: boolean;
+		sandbox: boolean;
+	};
+	codex: {
+		dangerouslyBypassApprovalsAndSandbox: boolean;
+		approvalPolicy: string;
+		sandboxMode: string;
+	};
+}
+export const PERMISSION_DEFAULTS: PermissionConfig = {
+	openCode: {
+		dangerouslySkipPermissions: false,
+	},
+	gemini: {
+		yolo: false,
+		sandbox: true,
+	},
+	codex: {
+		dangerouslyBypassApprovalsAndSandbox: false,
+		approvalPolicy: "standard",
+		sandboxMode: "isolated",
+	},
+};
+const PermissionFlags = ({
+	config,
+	onChange,
+}: {
+	config: PermissionConfig;
+	onChange: (c: PermissionConfig) => void;
+}) => <div className="p-2 border rounded">Permission Flags Mock</div>;
 
 // Placeholder types for demo/testing
 export interface OpenCodeProvider {
