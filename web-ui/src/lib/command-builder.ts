@@ -4,6 +4,7 @@ export interface CommandOptions {
 	format: CommandFormat;
 	provider?: string;
 	model?: string;
+	agent?: string;
 	profile?: string;
 	flags: Record<string, boolean | string | number | undefined>;
 }
@@ -32,13 +33,17 @@ export function validateCommandOptions(options: CommandOptions): ValidationResul
 }
 
 export function buildCommand(options: CommandOptions): string {
-	const { format, provider, model, profile, flags } = options;
+	const { format, provider, model, agent, profile, flags } = options;
 	const parts: string[] = [];
 
 	if (format === "opencode") {
 		parts.push("opencode");
 		if (provider && model) {
 			parts.push(`${provider}:${model}`);
+		}
+		if (agent) {
+			parts.push("--agent");
+			parts.push(agent);
 		}
 	} else if (format === "gemini") {
 		parts.push("gemini");

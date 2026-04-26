@@ -23,10 +23,10 @@ export function CommandPreview({ options }: CommandPreviewProps) {
 					disabled={!validation.isValid}
 					className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors
             ${
-							copied
-								? "text-status-green bg-status-green/10"
-								: "text-accent-fg bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
-						}`}
+					copied
+						? "text-status-green bg-status-green/10"
+						: "text-accent-fg bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+				}`}
 				>
 					{copied ? (
 						<>
