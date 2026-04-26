@@ -7,20 +7,22 @@ export function useOpenCodeProviders() {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		// Mocking the fetch from ~/.local/share/opencode/auth.json and env vars
-		// as described in the prompt
 		const fetchProviders = async () => {
 			try {
 				setIsLoading(true);
-				// Simulate network delay
-				await new Promise((resolve) => setTimeout(resolve, 500));
+				// In a real app, this would be a TRPC/API call to the backend
+				// which would execute `opencode providers list`.
+				// For now, we update the mock with real data from the CLI.
+				await new Promise((resolve) => setTimeout(resolve, 300));
 
 				const mockProviders: Provider[] = [
-					{ id: "kimi", name: "Kimi For Coding" },
-					{ id: "minimax-plan-io", name: "MiniMax Coding Plan (minimax.io)" },
-					{ id: "minimax-plan-com", name: "MiniMax Coding Plan (minimaxi.com)" },
-					{ id: "minimax-io", name: "MiniMax (minimax.io)" },
-					{ id: "minimax-com", name: "MiniMax (minimaxi.com)" },
+					{ id: "opencode", name: "OpenCode" },
+					{ id: "CrofAI", name: "CrofAI" },
+					{ id: "kimi-for-coding", name: "Kimi For Coding" },
+					{ id: "minimax", name: "MiniMax" },
+					{ id: "minimax-cn", name: "MiniMax (CN)" },
+					{ id: "minimax-cn-coding-plan", name: "MiniMax (CN Coding Plan)" },
+					{ id: "minimax-coding-plan", name: "MiniMax (Coding Plan)" },
 				];
 
 				setProviders(mockProviders);

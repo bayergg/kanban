@@ -293,12 +293,14 @@ export function TaskAgentModelPicker({
 			if (effectiveAgentId === "gemini") {
 				if (selection.modelId) args.push("--model", selection.modelId);
 			} else if (effectiveAgentId === "codex") {
-				if (selection.providerId) args.push("--provider", selection.providerId);
+				if (selection.providerId === "ollama") {
+					args.push("--oss", "--local-provider", "ollama");
+				} else if (selection.providerId === "lmstudio") {
+					args.push("--oss", "--local-provider", "lmstudio");
+				}
 				if (selection.modelId) args.push("--model", selection.modelId);
-				if (selection.profileId) args.push("--profile", selection.profileId);
 			} else if (effectiveAgentId === "opencode") {
 				if (selection.agentId) args.push("--agent", selection.agentId);
-				if (selection.providerId) args.push("--provider", selection.providerId);
 				if (selection.modelId) args.push("--model", selection.modelId);
 			}
 			onCustomArgsChange?.(args.length > 0 ? args : undefined);

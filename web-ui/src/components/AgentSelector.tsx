@@ -10,12 +10,7 @@ export type CLIId = "gemini" | "codex" | "opencode";
 
 interface AgentSelectorProps {
 	cli: CLIId;
-	onSelectionChange?: (selection: {
-		agentId?: string;
-		providerId?: string;
-		modelId?: string;
-		profileId?: string;
-	}) => void;
+	onSelectionChange?: (selection: { agentId?: string; providerId?: string; modelId?: string }) => void;
 }
 
 export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionChange }) => {
@@ -31,7 +26,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 	const [selectedCodexModel, setSelectedCodexModel] = useState<string>(
 		CODEX_MODELS.find((m) => m.provider === CODEX_PROVIDERS[0]!.id)?.id || "",
 	);
-	const [selectedCodexProfile, setSelectedCodexProfile] = useState<string>("default");
 
 	// Gemini specific states
 	const [selectedGeminiModel, setSelectedGeminiModel] = useState<string>(GEMINI_MODELS[0]!.id);
@@ -61,14 +55,12 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 	useEffect(() => {
 		if (cli === "gemini") {
 			onSelectionChange?.({
-				providerId: "google",
 				modelId: selectedGeminiModel,
 			});
 		} else if (cli === "codex") {
 			onSelectionChange?.({
 				providerId: selectedCodexProvider,
 				modelId: selectedCodexModel,
-				profileId: selectedCodexProfile,
 			});
 		} else if (cli === "opencode") {
 			onSelectionChange?.({
@@ -82,7 +74,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 		selectedGeminiModel,
 		selectedCodexProvider,
 		selectedCodexModel,
-		selectedCodexProfile,
 		selectedAgent,
 		selectedOpenCodeProvider,
 		selectedOpenCodeModel,
@@ -137,13 +128,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 				{/* --- GEMINI UI --- */}
 				{cli === "gemini" && (
 					<>
-						<div className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-text-secondary px-1">Provider</span>
-							<div className="h-9 flex items-center px-3 rounded-md bg-surface-2 border border-border text-sm text-text-tertiary">
-								Google (Fixed)
-							</div>
-						</div>
-
 						<SelectorField
 							label="Model"
 							value={selectedGeminiModel}
@@ -171,18 +155,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 							onValueChange={setSelectedCodexModel}
 							options={filteredCodexModels}
 							icon={<Cpu size={14} />}
-						/>
-
-						<SelectorField
-							label="Profile"
-							value={selectedCodexProfile}
-							onValueChange={setSelectedCodexProfile}
-							options={[
-								{ id: "default", name: "Default Profile" },
-								{ id: "personal", name: "Personal (~/.codex/config.toml)" },
-								{ id: "work", name: "Work Profile" },
-							]}
-							icon={<User size={14} />}
 						/>
 					</>
 				)}
