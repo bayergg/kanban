@@ -3,7 +3,7 @@ import { getRuntimeLaunchSupportedAgentCatalog } from "@runtime-agent-catalog";
 import { ChevronDown } from "lucide-react";
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { AgentSelector, type CLIId } from "@/components/AgentSelector";
 import { ClineChatModelSelector } from "@/components/detail-panels/cline-chat-model-selector";
 import {
 	buildClineAgentModelPickerOptions,
@@ -284,6 +284,28 @@ export function TaskAgentModelPicker({
 	const showClineProviderPicker = effectiveAgentId === "cline";
 	const showCustomArgsInput = effectiveAgentId !== "cline" && effectiveAgentId !== null;
 
+	const isAgentSelectorSupported =
+		effectiveAgentId === "gemini" || effectiveAgentId === "codex" || effectiveAgentId === "opencode";
+
+	const handleAgentSelectorChange = useCallback(
+		(selection: { agentId?: string; providerId?: string; modelId?: string; profileId?: string }) => {
+			const args: string[] = [];
+			if (effectiveAgentId === "gemini") {
+				if (selection.modelId) args.push("--model", selection.modelId);
+			} else if (effectiveAgentId === "codex") {
+				if (selection.providerId) args.push("--provider", selection.providerId);
+				if (selection.modelId) args.push("--model", selection.modelId);
+				if (selection.profileId) args.push("--profile", selection.profileId);
+			} else if (effectiveAgentId === "opencode") {
+				if (selection.agentId) args.push("--agent", selection.agentId);
+				if (selection.providerId) args.push("--provider", selection.providerId);
+				if (selection.modelId) args.push("--model", selection.modelId);
+			}
+			onCustomArgsChange?.(args.length > 0 ? args : undefined);
+		},
+		[effectiveAgentId, onCustomArgsChange],
+	);
+
 	// Show the Cline model picker when a provider is effectively selected
 	// (either explicitly overridden, or the global default provider is set)
 	const effectiveProviderId = clineProviderId ?? defaultProviderId ?? null;
@@ -493,21 +515,32 @@ export function TaskAgentModelPicker({
 						</div>
 						{showCustomArgsInput ? (
 							<div className="w-full sm:w-1/2 min-w-0">
-								<span className="text-[11px] text-text-secondary block mb-1">Custom Arguments</span>
-								<input
-									type="text"
-									placeholder="--verbose --model gpt-4"
-									value={customArgs?.join(" ") ?? ""}
-									onChange={(e) => {
-										const value = e.currentTarget.value.trim();
-										const args = value.length > 0 ? value.split(/\s+/) : undefined;
-										onCustomArgsChange?.(args);
-									}}
-									className="w-full px-2 py-1 text-[12px] bg-surface-2 border border-border rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
-								/>
-								<span className="text-[10px] text-text-tertiary block mt-1">
-									Space-separated extra arguments passed to the agent CLI.
-								</span>
+								{isAgentSelectorSupported ? (
+									<div className="mt-2">
+										<AgentSelector
+											cli={effectiveAgentId as CLIId}
+											onSelectionChange={handleAgentSelectorChange}
+										/>
+									</div>
+								) : (
+									<>
+										<span className="text-[11px] text-text-secondary block mb-1">Custom Arguments</span>
+										<input
+											type="text"
+											placeholder="--verbose --model gpt-4"
+											value={customArgs?.join(" ") ?? ""}
+											onChange={(e) => {
+												const value = e.currentTarget.value.trim();
+												const args = value.length > 0 ? value.split(/\s+/) : undefined;
+												onCustomArgsChange?.(args);
+											}}
+											className="w-full px-2 py-1 text-[12px] bg-surface-2 border border-border rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-focus"
+										/>
+										<span className="text-[10px] text-text-tertiary block mt-1">
+											Space-separated extra arguments passed to the agent CLI.
+										</span>
+									</>
+								)}
 							</div>
 						) : null}
 						{showClineProviderPicker ? (
