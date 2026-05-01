@@ -194,6 +194,9 @@ export function TaskInlineCreateCard({
 			if (event.target instanceof Node && container.contains(event.target)) {
 				return;
 			}
+			if (event.target instanceof Element && event.target.closest('[role="listbox"]')) {
+				return;
+			}
 			onCreate();
 		},
 		true,
