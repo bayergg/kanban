@@ -36,6 +36,7 @@ interface CreateTaskOptions {
 
 export interface UseTaskEditorResult {
 	isInlineTaskCreateOpen: boolean;
+	taskCreationNonce: number;
 	newTaskPrompt: string;
 	setNewTaskPrompt: Dispatch<SetStateAction<string>>;
 	newTaskImages: TaskImage[];
@@ -98,6 +99,7 @@ export function useTaskEditor({
 	queueTaskStartAfterEdit,
 }: UseTaskEditorInput): UseTaskEditorResult {
 	const [isInlineTaskCreateOpen, setIsInlineTaskCreateOpen] = useState(false);
+	const [taskCreationNonce, setTaskCreationNonce] = useState(0);
 	const [newTaskPrompt, setNewTaskPrompt] = useState("");
 	const [newTaskImages, setNewTaskImages] = useState<TaskImage[]>([]);
 	const [newTaskStartInPlanMode, setNewTaskStartInPlanMode] = useBooleanLocalStorageValue(
@@ -390,6 +392,7 @@ export function useTaskEditor({
 			setNewTaskAgentId(undefined);
 			setNewTaskClineSettings(undefined);
 			setNewTaskCustomArgs(undefined);
+			setTaskCreationNonce((n) => n + 1);
 			if (!options?.keepDialogOpen) {
 				setIsInlineTaskCreateOpen(false);
 			}
@@ -465,6 +468,7 @@ export function useTaskEditor({
 			setNewTaskAgentId(undefined);
 			setNewTaskClineSettings(undefined);
 			setNewTaskCustomArgs(undefined);
+			setTaskCreationNonce((n) => n + 1);
 			if (!options?.keepDialogOpen) {
 				setIsInlineTaskCreateOpen(false);
 			}
@@ -513,6 +517,7 @@ export function useTaskEditor({
 
 	return {
 		isInlineTaskCreateOpen,
+		taskCreationNonce,
 		newTaskPrompt,
 		setNewTaskPrompt,
 		newTaskImages,

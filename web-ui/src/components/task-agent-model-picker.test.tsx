@@ -549,9 +549,12 @@ describe("TaskAgentModelPicker – inherited default reasoning effort", () => {
 			button.textContent?.includes("Override Agent Settings"),
 		);
 		expect(settingsTrigger).not.toBeUndefined();
-		await act(async () => {
-			(settingsTrigger as HTMLButtonElement).click();
-		});
+		// Only click if it's not already open (content is not visible yet)
+		if (!container.textContent?.includes("Agent")) {
+			await act(async () => {
+				(settingsTrigger as HTMLButtonElement).click();
+			});
+		}
 
 		expect(container.textContent).toContain("GPT-5.4 (High)");
 
@@ -599,9 +602,12 @@ describe("TaskAgentModelPicker – inherited default reasoning effort", () => {
 			button.textContent?.includes("Override Agent Settings"),
 		);
 		expect(settingsTrigger).not.toBeUndefined();
-		await act(async () => {
-			(settingsTrigger as HTMLButtonElement).click();
-		});
+		// Only click if it's not already open (content is not visible yet)
+		if (!container.textContent?.includes("Agent")) {
+			await act(async () => {
+				(settingsTrigger as HTMLButtonElement).click();
+			});
+		}
 
 		await renderPicker([
 			{ id: "openai/gpt-5.4", name: "GPT-5.4", supportsReasoningEffort: true },
@@ -646,9 +652,12 @@ describe("TaskAgentModelPicker – inherited default reasoning effort", () => {
 			button.textContent?.includes("Override Agent Settings"),
 		);
 		expect(settingsTrigger).not.toBeUndefined();
-		await act(async () => {
-			(settingsTrigger as HTMLButtonElement).click();
-		});
+		// Only click if it's not already open (content is not visible yet)
+		if (!container.textContent?.includes("Agent")) {
+			await act(async () => {
+				(settingsTrigger as HTMLButtonElement).click();
+			});
+		}
 
 		const modelTrigger = document.getElementById("cline-chat-model-picker");
 		expect(modelTrigger).not.toBeNull();
@@ -698,9 +707,12 @@ describe("TaskAgentModelPicker – inherited default reasoning effort", () => {
 			button.textContent?.includes("Override Agent Settings"),
 		);
 		expect(settingsTrigger).not.toBeUndefined();
-		await act(async () => {
-			(settingsTrigger as HTMLButtonElement).click();
-		});
+		// Only click if it's not already open (content is not visible yet)
+		if (!container.textContent?.includes("Agent")) {
+			await act(async () => {
+				(settingsTrigger as HTMLButtonElement).click();
+			});
+		}
 
 		const modelTrigger = document.getElementById("cline-chat-model-picker");
 		expect(modelTrigger).not.toBeNull();
@@ -755,9 +767,12 @@ describe("TaskAgentModelPicker – inherited default reasoning effort", () => {
 			button.textContent?.includes("Override Agent Settings"),
 		);
 		expect(settingsTrigger).not.toBeUndefined();
-		await act(async () => {
-			(settingsTrigger as HTMLButtonElement).click();
-		});
+		// Only click if it's not already open (content is not visible yet)
+		if (!container.textContent?.includes("Agent")) {
+			await act(async () => {
+				(settingsTrigger as HTMLButtonElement).click();
+			});
+		}
 
 		expect(container.textContent).toContain("GPT-5.3 Codex");
 		expect(container.textContent).not.toContain("GPT-5.3 Codex (High)");

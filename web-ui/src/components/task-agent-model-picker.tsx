@@ -314,7 +314,11 @@ export function TaskAgentModelPicker({
 	const showClineModelPicker = showClineProviderPicker && Boolean(effectiveProviderId);
 	const hasTaskClineSettingsOverride = clineSettings !== undefined;
 	const selectedTaskReasoningEffort = clineReasoningEffort ?? "";
-	const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
+	const [isSettingsExpanded, setIsSettingsExpanded] = useState(() => {
+		return (
+			agentId !== undefined || clineSettings !== undefined || (customArgs !== undefined && customArgs.length > 0)
+		);
+	});
 	const [isProviderPopoverOpen, setIsProviderPopoverOpen] = useState(false);
 	const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false);
 	const [reasoningEffort, setReasoningEffort] = useState<RuntimeClineReasoningEffort | "">(
