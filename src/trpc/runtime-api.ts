@@ -44,6 +44,7 @@ import {
 } from "../core/api-validation";
 import { isHomeAgentSessionId } from "../core/home-agent-session";
 import { resolveTaskTitle } from "../core/task-title.js";
+import { fetchOpenCodeModels, fetchOpenCodeProviders } from "../opencode/opencode-models-service";
 import { setPasscode } from "../security/passcode-manager";
 import { openInBrowser } from "../server/browser";
 import { buildRuntimeConfigResponse, resolveAgentCommand } from "../terminal/agent-registry";
@@ -535,6 +536,15 @@ export function createRuntimeApi(deps: CreateRuntimeApiDependencies): RuntimeTrp
 		getClineProviderModels: async (_workspaceScope, input) => {
 			const body = parseClineProviderModelsRequest(input);
 			return await clineProviderService.getProviderModels(body.providerId);
+		},
+		getOpenCodeProviders: async () => {
+			return { providers: fetchOpenCodeProviders() };
+		},
+		getOpenCodeModels: async (_workspaceScope, input) => {
+			return {
+				providerId: input.providerId,
+				models: fetchOpenCodeModels(input.providerId),
+			};
 		},
 		getClineMcpAuthStatuses: async (_workspaceScope) => {
 			const statuses = await clineMcpRuntimeService.getAuthStatuses();

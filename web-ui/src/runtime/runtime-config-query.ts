@@ -28,6 +28,8 @@ import type {
 	RuntimeConfigResponse,
 	RuntimeDebugResetAllStateResponse,
 	RuntimeFeaturebaseTokenResponse,
+	RuntimeOpenCodeModel,
+	RuntimeOpenCodeProvider,
 	RuntimeProjectShortcut,
 	RuntimeRunUpdateResponse,
 	RuntimeUpdateStatusResponse,
@@ -213,6 +215,21 @@ export async function runClineMcpServerOAuth(
 export async function resetRuntimeDebugState(workspaceId: string | null): Promise<RuntimeDebugResetAllStateResponse> {
 	const trpcClient = getRuntimeTrpcClient(workspaceId);
 	return await trpcClient.runtime.resetAllState.mutate();
+}
+
+export async function fetchOpenCodeProviders(workspaceId: string | null): Promise<RuntimeOpenCodeProvider[]> {
+	const trpcClient = getRuntimeTrpcClient(workspaceId);
+	const response = await trpcClient.runtime.getOpenCodeProviders.query();
+	return response.providers;
+}
+
+export async function fetchOpenCodeModels(
+	workspaceId: string | null,
+	providerId: string,
+): Promise<RuntimeOpenCodeModel[]> {
+	const trpcClient = getRuntimeTrpcClient(workspaceId);
+	const response = await trpcClient.runtime.getOpenCodeModels.query({ providerId });
+	return response.models;
 }
 
 export async function openFileOnHost(workspaceId: string | null, filePath: string): Promise<void> {

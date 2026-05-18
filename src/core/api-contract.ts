@@ -1290,3 +1290,34 @@ export const runtimePasscodeUpdateResponseSchema = z.object({
 	error: z.string().optional(),
 });
 export type RuntimePasscodeUpdateResponse = z.infer<typeof runtimePasscodeUpdateResponseSchema>;
+
+// --- OpenCode provider/model schemas ---
+
+export const runtimeOpenCodeProviderSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+});
+export type RuntimeOpenCodeProvider = z.infer<typeof runtimeOpenCodeProviderSchema>;
+
+export const runtimeOpenCodeProvidersResponseSchema = z.object({
+	providers: z.array(runtimeOpenCodeProviderSchema),
+});
+export type RuntimeOpenCodeProvidersResponse = z.infer<typeof runtimeOpenCodeProvidersResponseSchema>;
+
+export const runtimeOpenCodeModelSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	provider: z.string(),
+});
+export type RuntimeOpenCodeModel = z.infer<typeof runtimeOpenCodeModelSchema>;
+
+export const runtimeOpenCodeModelsRequestSchema = z.object({
+	providerId: z.string(),
+});
+export type RuntimeOpenCodeModelsRequest = z.infer<typeof runtimeOpenCodeModelsRequestSchema>;
+
+export const runtimeOpenCodeModelsResponseSchema = z.object({
+	providerId: z.string(),
+	models: z.array(runtimeOpenCodeModelSchema),
+});
+export type RuntimeOpenCodeModelsResponse = z.infer<typeof runtimeOpenCodeModelsResponseSchema>;

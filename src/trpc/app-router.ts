@@ -53,6 +53,9 @@ import type {
 	RuntimeGitSyncResponse,
 	RuntimeHookIngestRequest,
 	RuntimeHookIngestResponse,
+	RuntimeOpenCodeModelsRequest,
+	RuntimeOpenCodeModelsResponse,
+	RuntimeOpenCodeProvidersResponse,
 	RuntimeOpenFileRequest,
 	RuntimeOpenFileResponse,
 	RuntimePasscodeUpdateRequest,
@@ -146,6 +149,9 @@ import {
 	runtimeGitSyncResponseSchema,
 	runtimeHookIngestRequestSchema,
 	runtimeHookIngestResponseSchema,
+	runtimeOpenCodeModelsRequestSchema,
+	runtimeOpenCodeModelsResponseSchema,
+	runtimeOpenCodeProvidersResponseSchema,
 	runtimeOpenFileRequestSchema,
 	runtimeOpenFileResponseSchema,
 	runtimePasscodeUpdateRequestSchema,
@@ -283,6 +289,11 @@ export interface RuntimeTrpcContext {
 			scope: RuntimeTrpcWorkspaceScope | null,
 			input: RuntimeClineMcpOAuthRequest,
 		) => Promise<RuntimeClineMcpOAuthResponse>;
+		getOpenCodeProviders: (scope: RuntimeTrpcWorkspaceScope | null) => Promise<RuntimeOpenCodeProvidersResponse>;
+		getOpenCodeModels: (
+			scope: RuntimeTrpcWorkspaceScope | null,
+			input: RuntimeOpenCodeModelsRequest,
+		) => Promise<RuntimeOpenCodeModelsResponse>;
 		getClineMcpSettings: (scope: RuntimeTrpcWorkspaceScope | null) => Promise<RuntimeClineMcpSettingsResponse>;
 		saveClineMcpSettings: (
 			scope: RuntimeTrpcWorkspaceScope | null,
@@ -542,6 +553,15 @@ export const runtimeAppRouter = t.router({
 			.output(runtimeClineProviderModelsResponseSchema)
 			.query(async ({ ctx, input }) => {
 				return await ctx.runtimeApi.getClineProviderModels(ctx.workspaceScope, input);
+			}),
+		getOpenCodeProviders: t.procedure.output(runtimeOpenCodeProvidersResponseSchema).query(async ({ ctx }) => {
+			return await ctx.runtimeApi.getOpenCodeProviders(ctx.workspaceScope);
+		}),
+		getOpenCodeModels: t.procedure
+			.input(runtimeOpenCodeModelsRequestSchema)
+			.output(runtimeOpenCodeModelsResponseSchema)
+			.query(async ({ ctx, input }) => {
+				return await ctx.runtimeApi.getOpenCodeModels(ctx.workspaceScope, input);
 			}),
 		getClineMcpAuthStatuses: t.procedure.output(runtimeClineMcpAuthStatusResponseSchema).query(async ({ ctx }) => {
 			return await ctx.runtimeApi.getClineMcpAuthStatuses(ctx.workspaceScope);

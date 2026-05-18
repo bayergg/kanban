@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Provider } from "../data/cli-models";
+import { fetchOpenCodeProviders } from "../runtime/runtime-config-query";
 
 export function useOpenCodeProviders() {
 	const [providers, setProviders] = useState<Provider[]>([]);
@@ -7,33 +8,34 @@ export function useOpenCodeProviders() {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		const fetchProviders = async () => {
+		let cancelled = false;
+
+		const loadProviders = async () => {
 			try {
 				setIsLoading(true);
-				// In a real app, this would be a TRPC/API call to the backend
-				// which would execute `opencode providers list`.
-				// For now, we update the mock with real data from the CLI.
-				await new Promise((resolve) => setTimeout(resolve, 300));
-
-				const mockProviders: Provider[] = [
-					{ id: "opencode", name: "OpenCode" },
-					{ id: "CrofAI", name: "CrofAI" },
-					{ id: "kimi-for-coding", name: "Kimi For Coding" },
-					{ id: "minimax", name: "MiniMax" },
-					{ id: "minimax-cn", name: "MiniMax (CN)" },
-					{ id: "minimax-cn-coding-plan", name: "MiniMax (CN Coding Plan)" },
-					{ id: "minimax-coding-plan", name: "MiniMax (Coding Plan)" },
-				];
-
-				setProviders(mockProviders);
+				setError(null);
+				// Pass null workspaceId — opencode provider data is system-wide.
+				const items = await fetchOpenCodeProviders(null);
+				if (!cancelled) {
+					setProviders(items);
+				}
 			} catch (_err) {
-				setError("Failed to load OpenCode providers");
+				if (!cancelled) {
+					setError("Failed to load OpenCode providers");
+					setProviders([]);
+				}
 			} finally {
-				setIsLoading(false);
+				if (!cancelled) {
+					setIsLoading(false);
+				}
 			}
 		};
 
-		fetchProviders();
+		loadProviders();
+
+		return () => {
+			cancelled = true;
+		};
 	}, []);
 
 	return { providers, isLoading, error };
