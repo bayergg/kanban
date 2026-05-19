@@ -520,7 +520,11 @@ export function TaskAgentModelPicker({
 							</NativeSelect>
 						</div>
 						{showCustomArgsInput && isAgentSelectorSupported ? (
-							<AgentSelector cli={effectiveAgentId as CLIId} onSelectionChange={handleAgentSelectorChange} />
+							<AgentSelector
+								cli={effectiveAgentId as CLIId}
+								onSelectionChange={handleAgentSelectorChange}
+								initialCustomArgs={customArgs}
+							/>
 						) : null}
 						{showCustomArgsInput && !isAgentSelectorSupported ? (
 							<div className="w-full sm:w-1/2 min-w-0">

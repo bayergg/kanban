@@ -1,34 +1,73 @@
 import * as Select from "@radix-ui/react-select";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type React from "react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { CODEX_MODELS, CODEX_PROVIDERS, GEMINI_MODELS, OPENCODE_AGENTS } from "../data/cli-models";
 import { useOpenCodeModels } from "../hooks/useOpenCodeModels";
 import { useOpenCodeProviders } from "../hooks/useOpenCodeProviders";
 
 export type CLIId = "gemini" | "codex" | "opencode";
 
+function parseCustomArgs(args: string[] | undefined): { agentId?: string; modelId?: string; providerId?: string } {
+	if (!args) return {};
+	const result: { agentId?: string; modelId?: string; providerId?: string } = {};
+	for (let i = 0; i < args.length; i++) {
+		if (args[i] === "--agent" && i + 1 < args.length) {
+			result.agentId = args[i + 1];
+			i++;
+		} else if (args[i] === "--model" && i + 1 < args.length) {
+			result.modelId = args[i + 1];
+			i++;
+		} else if (args[i] === "--local-provider" && i + 1 < args.length) {
+			result.providerId = args[i + 1];
+			i++;
+		}
+	}
+	return result;
+}
+
 interface AgentSelectorProps {
 	cli: CLIId;
 	onSelectionChange?: (selection: { agentId?: string; providerId?: string; modelId?: string }) => void;
+	initialCustomArgs?: string[];
 }
 
-export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionChange }) => {
+export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionChange, initialCustomArgs }) => {
+	const parsedInitial = useRef(parseCustomArgs(initialCustomArgs));
+	const mountedRef = useRef(false);
+
 	// OpenCode specific states
 	const { providers: openCodeProviders, isLoading: isLoadingProviders } = useOpenCodeProviders();
-	const [selectedAgent, setSelectedAgent] = useState<string>(OPENCODE_AGENTS[0]!.id);
-	const [selectedOpenCodeProvider, setSelectedOpenCodeProvider] = useState<string | null>(null);
+	const [selectedAgent, setSelectedAgent] = useState<string>(parsedInitial.current.agentId ?? OPENCODE_AGENTS[0]!.id);
+	const [selectedOpenCodeProvider, setSelectedOpenCodeProvider] = useState<string | null>(() => {
+		if (parsedInitial.current.modelId?.includes("/")) {
+			return parsedInitial.current.modelId.split("/")[0] ?? null;
+		}
+		return parsedInitial.current.providerId ?? null;
+	});
 	const { models: openCodeModels, isLoading: isLoadingModels } = useOpenCodeModels(selectedOpenCodeProvider);
-	const [selectedOpenCodeModel, setSelectedOpenCodeModel] = useState<string | null>(null);
-
-	// Codex specific states
-	const [selectedCodexProvider, setSelectedCodexProvider] = useState<string>(CODEX_PROVIDERS[0]!.id);
-	const [selectedCodexModel, setSelectedCodexModel] = useState<string>(
-		CODEX_MODELS.find((m) => m.provider === CODEX_PROVIDERS[0]!.id)?.id || "",
+	const [selectedOpenCodeModel, setSelectedOpenCodeModel] = useState<string | null>(
+		parsedInitial.current.modelId ?? null,
 	);
 
+	// Codex specific states
+	const [selectedCodexProvider, setSelectedCodexProvider] = useState<string>(
+		parsedInitial.current.providerId ?? CODEX_PROVIDERS[0]!.id,
+	);
+	const [selectedCodexModel, setSelectedCodexModel] = useState<string>(() => {
+		if (parsedInitial.current.modelId) return parsedInitial.current.modelId;
+		return CODEX_MODELS.find((m) => m.provider === CODEX_PROVIDERS[0]!.id)?.id || "";
+	});
+
 	// Gemini specific states
-	const [selectedGeminiModel, setSelectedGeminiModel] = useState<string>(GEMINI_MODELS[0]!.id);
+	const [selectedGeminiModel, setSelectedGeminiModel] = useState<string>(
+		parsedInitial.current.modelId ?? GEMINI_MODELS[0]!.id,
+	);
+
+	// Mark as mounted after first render
+	useEffect(() => {
+		mountedRef.current = true;
+	}, []);
 
 	// Reset states when CLI changes
 	useEffect(() => {
@@ -58,8 +97,9 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 		}
 	};
 
-	// Notify parent of changes
+	// Notify parent of changes (skip on mount to avoid overwriting existing customArgs)
 	useEffect(() => {
+		if (!mountedRef.current) return;
 		if (cli === "gemini") {
 			onSelectionChange?.({
 				modelId: selectedGeminiModel,
