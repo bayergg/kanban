@@ -19,20 +19,8 @@ export interface OpenCodeModelEntry {
 
 // --- In-memory cache ---
 
-interface CacheEntry<T> {
-	data: T;
-	timestamp: number;
-}
-
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-let _providersCache: { data: OpenCodeProviderEntry[]; timestamp: number } | null = null;
-const _modelsCache = new Map<string, { data: OpenCodeModelEntry[]; timestamp: number }>();
-
-function isCacheValid<T>(entry: CacheEntry<T> | null | undefined): entry is CacheEntry<T> {
-	if (!entry) return false;
-	return Date.now() - entry.timestamp < CACHE_TTL_MS;
-}
+let _providersCache: OpenCodeProviderEntry[] | null = null;
+const _modelsCache = new Map<string, OpenCodeModelEntry[]>();
 
 // --- Helpers ---
 
@@ -140,39 +128,38 @@ export function isOpenCodeInstalled(): boolean {
 
 /** Fetches all available providers from the opencode CLI. Returns cached data if available. */
 export function fetchOpenCodeProviders(): OpenCodeProviderEntry[] {
-	const cached = _providersCache;
-	if (isCacheValid(cached)) {
-		return cached.data;
+	if (_providersCache) {
+		return _providersCache;
 	}
 
 	if (!isOpenCodeInstalled()) {
-		_providersCache = { data: [], timestamp: Date.now() };
+		_providersCache = [];
 		return [];
 	}
 
 	const output = getOpencodeModelsOutput();
 	const providers = parseProvidersFromOutput(output);
 
-	_providersCache = { data: providers, timestamp: Date.now() };
+	_providersCache = providers;
 	return providers;
 }
 
 /** Fetches available models for a specific provider. Returns cached data if available. */
 export function fetchOpenCodeModels(providerId: string): OpenCodeModelEntry[] {
 	const cached = _modelsCache.get(providerId);
-	if (isCacheValid(cached)) {
-		return cached.data;
+	if (cached) {
+		return cached;
 	}
 
 	if (!isOpenCodeInstalled()) {
-		_modelsCache.set(providerId, { data: [], timestamp: Date.now() });
+		_modelsCache.set(providerId, []);
 		return [];
 	}
 
 	const output = getOpencodeModelsOutput(providerId);
 	const models = parseModelsFromOutput(output, providerId);
 
-	_modelsCache.set(providerId, { data: models, timestamp: Date.now() });
+	_modelsCache.set(providerId, models);
 	return models;
 }
 

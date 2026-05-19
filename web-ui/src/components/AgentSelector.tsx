@@ -2,7 +2,8 @@ import * as Select from "@radix-ui/react-select";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { CODEX_MODELS, CODEX_PROVIDERS, GEMINI_MODELS, OPENCODE_AGENTS } from "../data/cli-models";
+import { CODEX_MODELS, CODEX_PROVIDERS, GEMINI_MODELS } from "../data/cli-models";
+import { useOpenCodeAgents } from "../hooks/useOpenCodeAgents";
 import { useOpenCodeModels } from "../hooks/useOpenCodeModels";
 import { useOpenCodeProviders } from "../hooks/useOpenCodeProviders";
 
@@ -38,7 +39,9 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 
 	// OpenCode specific states
 	const { providers: openCodeProviders, isLoading: isLoadingProviders } = useOpenCodeProviders();
-	const [selectedAgent, setSelectedAgent] = useState<string>(parsedInitial.current.agentId ?? OPENCODE_AGENTS[0]!.id);
+	const { agents: openCodeAgents, isLoading: isLoadingAgents } = useOpenCodeAgents();
+	const primaryAgents = useMemo(() => openCodeAgents.filter((a) => a.type === "primary"), [openCodeAgents]);
+	const [selectedAgent, setSelectedAgent] = useState<string>(parsedInitial.current.agentId ?? "build");
 	const [selectedOpenCodeProvider, setSelectedOpenCodeProvider] = useState<string | null>(() => {
 		if (parsedInitial.current.modelId?.includes("/")) {
 			return parsedInitial.current.modelId.split("/")[0] ?? null;
@@ -141,7 +144,8 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 							label="Agent"
 							value={selectedAgent}
 							onValueChange={setSelectedAgent}
-							options={OPENCODE_AGENTS.map((a) => ({ id: a.id, name: `${a.name} (${a.type})` }))}
+							options={primaryAgents}
+							isLoading={isLoadingAgents}
 						/>
 					</div>
 

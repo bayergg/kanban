@@ -1321,3 +1321,15 @@ export const runtimeOpenCodeModelsResponseSchema = z.object({
 	models: z.array(runtimeOpenCodeModelSchema),
 });
 export type RuntimeOpenCodeModelsResponse = z.infer<typeof runtimeOpenCodeModelsResponseSchema>;
+
+export const runtimeOpenCodeAgentSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	type: z.string(),
+});
+export type RuntimeOpenCodeAgent = z.infer<typeof runtimeOpenCodeAgentSchema>;
+
+export const runtimeOpenCodeAgentsResponseSchema = z.object({
+	agents: z.array(runtimeOpenCodeAgentSchema),
+});
+export type RuntimeOpenCodeAgentsResponse = z.infer<typeof runtimeOpenCodeAgentsResponseSchema>;

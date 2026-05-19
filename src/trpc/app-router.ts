@@ -53,6 +53,7 @@ import type {
 	RuntimeGitSyncResponse,
 	RuntimeHookIngestRequest,
 	RuntimeHookIngestResponse,
+	RuntimeOpenCodeAgentsResponse,
 	RuntimeOpenCodeModelsRequest,
 	RuntimeOpenCodeModelsResponse,
 	RuntimeOpenCodeProvidersResponse,
@@ -149,6 +150,7 @@ import {
 	runtimeGitSyncResponseSchema,
 	runtimeHookIngestRequestSchema,
 	runtimeHookIngestResponseSchema,
+	runtimeOpenCodeAgentsResponseSchema,
 	runtimeOpenCodeModelsRequestSchema,
 	runtimeOpenCodeModelsResponseSchema,
 	runtimeOpenCodeProvidersResponseSchema,
@@ -289,6 +291,7 @@ export interface RuntimeTrpcContext {
 			scope: RuntimeTrpcWorkspaceScope | null,
 			input: RuntimeClineMcpOAuthRequest,
 		) => Promise<RuntimeClineMcpOAuthResponse>;
+		getOpenCodeAgents: (scope: RuntimeTrpcWorkspaceScope | null) => Promise<RuntimeOpenCodeAgentsResponse>;
 		getOpenCodeProviders: (scope: RuntimeTrpcWorkspaceScope | null) => Promise<RuntimeOpenCodeProvidersResponse>;
 		getOpenCodeModels: (
 			scope: RuntimeTrpcWorkspaceScope | null,
@@ -554,6 +557,9 @@ export const runtimeAppRouter = t.router({
 			.query(async ({ ctx, input }) => {
 				return await ctx.runtimeApi.getClineProviderModels(ctx.workspaceScope, input);
 			}),
+		getOpenCodeAgents: t.procedure.output(runtimeOpenCodeAgentsResponseSchema).query(async ({ ctx }) => {
+			return await ctx.runtimeApi.getOpenCodeAgents(ctx.workspaceScope);
+		}),
 		getOpenCodeProviders: t.procedure.output(runtimeOpenCodeProvidersResponseSchema).query(async ({ ctx }) => {
 			return await ctx.runtimeApi.getOpenCodeProviders(ctx.workspaceScope);
 		}),

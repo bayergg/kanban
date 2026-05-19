@@ -28,6 +28,7 @@ import type {
 	RuntimeConfigResponse,
 	RuntimeDebugResetAllStateResponse,
 	RuntimeFeaturebaseTokenResponse,
+	RuntimeOpenCodeAgent,
 	RuntimeOpenCodeModel,
 	RuntimeOpenCodeProvider,
 	RuntimeProjectShortcut,
@@ -221,6 +222,12 @@ export async function fetchOpenCodeProviders(workspaceId: string | null): Promis
 	const trpcClient = getRuntimeTrpcClient(workspaceId);
 	const response = await trpcClient.runtime.getOpenCodeProviders.query();
 	return response.providers;
+}
+
+export async function fetchOpenCodeAgents(workspaceId: string | null): Promise<RuntimeOpenCodeAgent[]> {
+	const trpcClient = getRuntimeTrpcClient(workspaceId);
+	const response = await trpcClient.runtime.getOpenCodeAgents.query();
+	return response.agents;
 }
 
 export async function fetchOpenCodeModels(

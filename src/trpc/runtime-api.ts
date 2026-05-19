@@ -44,6 +44,7 @@ import {
 } from "../core/api-validation";
 import { isHomeAgentSessionId } from "../core/home-agent-session";
 import { resolveTaskTitle } from "../core/task-title.js";
+import { fetchOpenCodeAgents } from "../opencode/opencode-agents-service";
 import { fetchOpenCodeModels, fetchOpenCodeProviders } from "../opencode/opencode-models-service";
 import { setPasscode } from "../security/passcode-manager";
 import { openInBrowser } from "../server/browser";
@@ -536,6 +537,9 @@ export function createRuntimeApi(deps: CreateRuntimeApiDependencies): RuntimeTrp
 		getClineProviderModels: async (_workspaceScope, input) => {
 			const body = parseClineProviderModelsRequest(input);
 			return await clineProviderService.getProviderModels(body.providerId);
+		},
+		getOpenCodeAgents: async () => {
+			return { agents: fetchOpenCodeAgents() };
 		},
 		getOpenCodeProviders: async () => {
 			return { providers: fetchOpenCodeProviders() };

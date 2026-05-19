@@ -9,6 +9,12 @@ export interface Provider {
 	name: string;
 }
 
+export interface Agent {
+	id: string;
+	name: string;
+	type: string;
+}
+
 export const GEMINI_MODELS: Model[] = [
 	{ id: "auto", name: "Auto (Default)", provider: "google" },
 	{ id: "pro", name: "Pro", provider: "google" },
@@ -46,14 +52,4 @@ export const CODEX_MODELS: Model[] = [
 	{ id: "llama3.3", name: "Llama 3.3", provider: "ollama" },
 	{ id: "codestral", name: "Codestral", provider: "ollama" },
 	{ id: "custom-model", name: "Custom Model", provider: "custom" },
-];
-
-export const OPENCODE_AGENTS = [
-	{ id: "general", name: "General", type: "subagent" },
-	{ id: "build", name: "Build", type: "primary" },
-	{ id: "plan", name: "Plan", type: "primary" },
-	{ id: "explore", name: "Explore", type: "subagent" },
-	{ id: "review", name: "Review", type: "primary" },
-	{ id: "summary", name: "Summary", type: "primary" },
-	{ id: "title", name: "Title", type: "primary" },
 ];
