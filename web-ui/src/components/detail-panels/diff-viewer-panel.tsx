@@ -26,6 +26,7 @@ interface FileDiffGroup {
 	entries: Array<{
 		id: string;
 		isBinary: boolean;
+		isTooLarge: boolean;
 		oldText: string | null;
 		newText: string;
 	}>;
@@ -534,6 +535,7 @@ export function DiffViewerPanel({
 			id: `workspace-${file.path}-${index}`,
 			path: file.path,
 			isBinary: isBinaryFilePath(file.path),
+			isTooLarge: file.isTooLarge ?? false,
 			oldText: file.oldText,
 			newText: file.newText ?? "",
 			additions: file.additions,
@@ -562,6 +564,7 @@ export function DiffViewerPanel({
 			group.entries.push({
 				id: entry.id,
 				isBinary: entry.isBinary,
+				isTooLarge: entry.isTooLarge,
 				oldText: entry.oldText,
 				newText: entry.newText,
 			});
@@ -838,6 +841,7 @@ export function DiffViewerPanel({
 						{groupedByPath.map((group) => {
 							const isExpanded = expandedPaths[group.path] ?? true;
 							const hasBinaryEntry = group.entries.some((entry) => entry.isBinary);
+							const hasTooLargeEntry = group.entries.some((entry) => entry.isTooLarge);
 							return (
 								<section
 									key={group.path}
@@ -880,6 +884,7 @@ export function DiffViewerPanel({
 											{group.added === 0 && group.removed === 0 && hasBinaryEntry ? (
 												<span className="ml-2 text-text-tertiary">Binary</span>
 											) : null}
+											{hasTooLargeEntry ? <span className="ml-2 text-text-tertiary">Too large</span> : null}
 										</span>
 									</button>
 									{isExpanded ? (
@@ -889,7 +894,11 @@ export function DiffViewerPanel({
 										>
 											{group.entries.map((entry) => (
 												<div key={entry.id} className="kb-diff-entry">
-													{entry.isBinary ? null : viewMode === "split" ? (
+													{entry.isBinary ? null : entry.isTooLarge ? (
+														<div className="px-3 py-2 text-[12px] text-text-tertiary">
+															File too large to display.
+														</div>
+													) : viewMode === "split" ? (
 														<SplitDiff
 															path={group.path}
 															oldText={entry.oldText}

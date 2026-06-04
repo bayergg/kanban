@@ -10,6 +10,21 @@ import { getGitStdout } from "./git-utils";
 
 const WORKSPACE_CHANGES_CACHE_MAX_ENTRIES = 128;
 
+// Maximum size (in bytes) of a single file side (old or new) whose full
+// contents we will embed in the diff response. Files larger than this have
+// their contents omitted (oldText/newText set to null) and are flagged
+// `isTooLarge`. This keeps the serialized response well under V8's maximum
+// string length (~512MB), which a few large data files (e.g. CSV dumps) would
+// otherwise blow past and crash the whole request with "Invalid string length".
+const MAX_DIFF_CONTENT_BYTES = 2 * 1024 * 1024;
+
+interface CappedContent {
+	text: string | null;
+	tooLarge: boolean;
+}
+
+const NO_CONTENT: CappedContent = { text: null, tooLarge: false };
+
 interface WorkspaceChangesCacheEntry {
 	stateKey: string;
 	response: RuntimeWorkspaceChangesResponse;
@@ -166,14 +181,6 @@ function pruneWorkspaceChangesCache(): void {
 	}
 }
 
-async function readHeadFile(repoRoot: string, path: string): Promise<string | null> {
-	try {
-		return await getGitStdout(["show", `HEAD:${path}`], repoRoot);
-	} catch {
-		return null;
-	}
-}
-
 async function readFileAtRef(repoRoot: string, ref: string, path: string): Promise<string | null> {
 	try {
 		return await getGitStdout(["show", `${ref}:${path}`], repoRoot);
@@ -188,6 +195,43 @@ async function readWorkingTreeFile(repoRoot: string, path: string): Promise<stri
 	} catch {
 		return null;
 	}
+}
+
+async function getWorkingTreeFileSize(repoRoot: string, path: string): Promise<number | null> {
+	try {
+		const stats = await stat(join(repoRoot, path));
+		return stats.size;
+	} catch {
+		return null;
+	}
+}
+
+async function getBlobSize(repoRoot: string, ref: string, path: string): Promise<number | null> {
+	try {
+		const output = await getGitStdout(["cat-file", "-s", `${ref}:${path}`], repoRoot);
+		const size = Number.parseInt(output.trim(), 10);
+		return Number.isFinite(size) ? size : null;
+	} catch {
+		return null;
+	}
+}
+
+/** Reads a working-tree file, omitting its contents when it exceeds the size cap. */
+async function readWorkingTreeFileCapped(repoRoot: string, path: string): Promise<CappedContent> {
+	const size = await getWorkingTreeFileSize(repoRoot, path);
+	if (size != null && size > MAX_DIFF_CONTENT_BYTES) {
+		return { text: null, tooLarge: true };
+	}
+	return { text: await readWorkingTreeFile(repoRoot, path), tooLarge: false };
+}
+
+/** Reads a git blob at `ref:path`, omitting its contents when it exceeds the size cap. */
+async function readBlobCapped(repoRoot: string, ref: string, path: string): Promise<CappedContent> {
+	const size = await getBlobSize(repoRoot, ref, path);
+	if (size != null && size > MAX_DIFF_CONTENT_BYTES) {
+		return { text: null, tooLarge: true };
+	}
+	return { text: await readFileAtRef(repoRoot, ref, path), tooLarge: false };
 }
 
 function fallbackStats(oldText: string | null, newText: string | null): DiffStat {
@@ -282,13 +326,17 @@ async function readDiffStatFromRef(repoRoot: string, fromRef: string, path: stri
 
 async function buildFileChange(repoRoot: string, entry: NameStatusEntry): Promise<RuntimeWorkspaceFileChange> {
 	const basePath = entry.previousPath ?? entry.path;
-	const oldText =
-		entry.status === "added" || entry.status === "untracked" ? null : await readHeadFile(repoRoot, basePath);
-	const newText = entry.status === "deleted" ? null : await readWorkingTreeFile(repoRoot, entry.path);
-	const stats =
-		entry.status === "untracked"
-			? { additions: toLineCount(newText ?? ""), deletions: 0 }
-			: ((await readDiffStat(repoRoot, entry.path)) ?? fallbackStats(oldText, newText));
+	const old =
+		entry.status === "added" || entry.status === "untracked"
+			? NO_CONTENT
+			: await readBlobCapped(repoRoot, "HEAD", basePath);
+	const next = entry.status === "deleted" ? NO_CONTENT : await readWorkingTreeFileCapped(repoRoot, entry.path);
+	const tooLarge = old.tooLarge || next.tooLarge;
+	const stats = tooLarge
+		? ((await readDiffStat(repoRoot, entry.path)) ?? { additions: 0, deletions: 0 })
+		: entry.status === "untracked"
+			? { additions: toLineCount(next.text ?? ""), deletions: 0 }
+			: ((await readDiffStat(repoRoot, entry.path)) ?? fallbackStats(old.text, next.text));
 
 	return {
 		path: entry.path,
@@ -296,8 +344,9 @@ async function buildFileChange(repoRoot: string, entry: NameStatusEntry): Promis
 		status: entry.status,
 		additions: stats.additions,
 		deletions: stats.deletions,
-		oldText,
-		newText,
+		oldText: tooLarge ? null : old.text,
+		newText: tooLarge ? null : next.text,
+		...(tooLarge ? { isTooLarge: true } : {}),
 	};
 }
 
@@ -308,10 +357,11 @@ async function buildFileChangeBetweenRefs(
 	toRef: string,
 ): Promise<RuntimeWorkspaceFileChange> {
 	const basePath = entry.previousPath ?? entry.path;
-	const oldText = entry.status === "added" ? null : await readFileAtRef(repoRoot, fromRef, basePath);
-	const newText = entry.status === "deleted" ? null : await readFileAtRef(repoRoot, toRef, entry.path);
+	const old = entry.status === "added" ? NO_CONTENT : await readBlobCapped(repoRoot, fromRef, basePath);
+	const next = entry.status === "deleted" ? NO_CONTENT : await readBlobCapped(repoRoot, toRef, entry.path);
+	const tooLarge = old.tooLarge || next.tooLarge;
 	const stats =
-		(await readDiffStatBetweenRefs(repoRoot, fromRef, toRef, entry.path)) ?? fallbackStats(oldText, newText);
+		(await readDiffStatBetweenRefs(repoRoot, fromRef, toRef, entry.path)) ?? fallbackStats(old.text, next.text);
 
 	return {
 		path: entry.path,
@@ -319,8 +369,9 @@ async function buildFileChangeBetweenRefs(
 		status: entry.status,
 		additions: stats.additions,
 		deletions: stats.deletions,
-		oldText,
-		newText,
+		oldText: tooLarge ? null : old.text,
+		newText: tooLarge ? null : next.text,
+		...(tooLarge ? { isTooLarge: true } : {}),
 	};
 }
 
@@ -330,15 +381,17 @@ async function buildFileChangeFromRef(
 	fromRef: string,
 ): Promise<RuntimeWorkspaceFileChange> {
 	const basePath = entry.previousPath ?? entry.path;
-	const oldText =
+	const old =
 		entry.status === "added" || entry.status === "untracked"
-			? null
-			: await readFileAtRef(repoRoot, fromRef, basePath);
-	const newText = entry.status === "deleted" ? null : await readWorkingTreeFile(repoRoot, entry.path);
-	const stats =
-		entry.status === "untracked"
-			? { additions: toLineCount(newText ?? ""), deletions: 0 }
-			: ((await readDiffStatFromRef(repoRoot, fromRef, entry.path)) ?? fallbackStats(oldText, newText));
+			? NO_CONTENT
+			: await readBlobCapped(repoRoot, fromRef, basePath);
+	const next = entry.status === "deleted" ? NO_CONTENT : await readWorkingTreeFileCapped(repoRoot, entry.path);
+	const tooLarge = old.tooLarge || next.tooLarge;
+	const stats = tooLarge
+		? ((await readDiffStatFromRef(repoRoot, fromRef, entry.path)) ?? { additions: 0, deletions: 0 })
+		: entry.status === "untracked"
+			? { additions: toLineCount(next.text ?? ""), deletions: 0 }
+			: ((await readDiffStatFromRef(repoRoot, fromRef, entry.path)) ?? fallbackStats(old.text, next.text));
 
 	return {
 		path: entry.path,
@@ -346,8 +399,9 @@ async function buildFileChangeFromRef(
 		status: entry.status,
 		additions: stats.additions,
 		deletions: stats.deletions,
-		oldText,
-		newText,
+		oldText: tooLarge ? null : old.text,
+		newText: tooLarge ? null : next.text,
+		...(tooLarge ? { isTooLarge: true } : {}),
 	};
 }
 

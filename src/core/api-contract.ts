@@ -20,6 +20,13 @@ export const runtimeWorkspaceFileChangeSchema = z.object({
 	deletions: z.number(),
 	oldText: z.string().nullable(),
 	newText: z.string().nullable(),
+	/**
+	 * True when the file's contents were omitted because one side exceeded the
+	 * max embeddable size. `oldText`/`newText` are null in that case; the file
+	 * still appears in the list (with stats) but the diff is not rendered.
+	 * Prevents the response from exceeding V8's max string length on large files.
+	 */
+	isTooLarge: z.boolean().optional(),
 });
 export type RuntimeWorkspaceFileChange = z.infer<typeof runtimeWorkspaceFileChangeSchema>;
 
