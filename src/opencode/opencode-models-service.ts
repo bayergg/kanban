@@ -15,6 +15,13 @@ export interface OpenCodeModelEntry {
 	id: string;
 	name: string;
 	provider: string;
+	/**
+	 * Model variant names (provider-specific reasoning efforts, e.g. "low", "high", "max").
+	 * Derived from the model's `variants` object in `opencode models <provider> --verbose`.
+	 * Empty when the model has no variants (e.g. non-reasoning models). Order is preserved
+	 * from the OpenCode output.
+	 */
+	variants: string[];
 }
 
 // --- In-memory cache ---
@@ -71,8 +78,14 @@ function parseModelLine(line: string): { provider: string; model: string } | nul
 
 // --- CLI execution ---
 
-function getOpencodeModelsOutput(providerId?: string): string {
-	const args = providerId ? [OPENCODE_BINARY, "models", providerId] : [OPENCODE_BINARY, "models"];
+function getOpencodeModelsOutput(providerId?: string, verbose?: boolean): string {
+	const args = [OPENCODE_BINARY, "models"];
+	if (providerId) {
+		args.push(providerId);
+	}
+	if (verbose) {
+		args.push("--verbose");
+	}
 	try {
 		return execSync(args.join(" "), {
 			encoding: "utf-8",
@@ -113,7 +126,99 @@ function parseModelsFromOutput(output: string, providerId: string): OpenCodeMode
 			id: `${parsed.provider}/${parsed.model}`,
 			name: modelIdToDisplayName(parsed.model),
 			provider: parsed.provider,
+			variants: [],
 		});
+	}
+
+	return models;
+}
+
+/**
+ * Parses the output of `opencode models <provider> --verbose`.
+ *
+ * Verbose output is a sequence of blocks, each made of a bare `provider/model`
+ * header line (no leading whitespace) followed by the pretty-printed JSON of the
+ * model (which always starts with a `{` on its own line). We detect each header,
+ * then capture the following JSON object via brace counting and read the keys of
+ * its `variants` object — those keys are the variant names (e.g. "high", "max").
+ *
+ * Falls back to the lightweight header-only parse (variants `[]`) when no JSON
+ * block can be parsed, so the model list never breaks if the format changes.
+ */
+export function parseVerboseModelsOutput(output: string, providerId: string): OpenCodeModelEntry[] {
+	const lines = output.split("\n");
+	const models: OpenCodeModelEntry[] = [];
+	let parsedAnyJson = false;
+
+	let i = 0;
+	while (i < lines.length) {
+		const line = lines[i];
+		if (line === undefined) {
+			break;
+		}
+
+		// A header line is a non-indented `provider/model` line (not part of JSON).
+		const isHeaderCandidate = line.length > 0 && line[0] !== " " && line[0] !== "\t" && line.trim() !== "{";
+		const parsed = isHeaderCandidate ? parseModelLine(line) : null;
+		if (!parsed || parsed.provider !== providerId) {
+			i += 1;
+			continue;
+		}
+
+		// Find the start of the JSON object (next line that is exactly `{`).
+		let j = i + 1;
+		while (j < lines.length && lines[j]?.trim() !== "{") {
+			// Stop early if we hit the next header before any JSON.
+			if (lines[j] && lines[j]?.[0] !== " " && lines[j]?.[0] !== "\t" && lines[j]?.trim() !== "") {
+				break;
+			}
+			j += 1;
+		}
+
+		let variants: string[] = [];
+		if (j < lines.length && lines[j]?.trim() === "{") {
+			// Capture the JSON object via brace counting.
+			let depth = 0;
+			let end = j;
+			const jsonLines: string[] = [];
+			for (let k = j; k < lines.length; k += 1) {
+				const jsonLine = lines[k] ?? "";
+				jsonLines.push(jsonLine);
+				for (const ch of jsonLine) {
+					if (ch === "{") depth += 1;
+					else if (ch === "}") depth -= 1;
+				}
+				end = k;
+				if (depth === 0) {
+					break;
+				}
+			}
+			try {
+				const model = JSON.parse(jsonLines.join("\n")) as { variants?: Record<string, unknown> };
+				if (model.variants && typeof model.variants === "object") {
+					variants = Object.keys(model.variants);
+				}
+				parsedAnyJson = true;
+			} catch {
+				// Leave variants empty for this block.
+			}
+			i = end + 1;
+		} else {
+			i += 1;
+		}
+
+		models.push({
+			id: `${parsed.provider}/${parsed.model}`,
+			name: modelIdToDisplayName(parsed.model),
+			provider: parsed.provider,
+			variants,
+		});
+	}
+
+	// If we couldn't parse any JSON at all, fall back to the lightweight parser so
+	// the model list still works (variants will be empty).
+	if (!parsedAnyJson && models.length === 0) {
+		return parseModelsFromOutput(output, providerId);
 	}
 
 	return models;
@@ -156,8 +261,10 @@ export function fetchOpenCodeModels(providerId: string): OpenCodeModelEntry[] {
 		return [];
 	}
 
-	const output = getOpencodeModelsOutput(providerId);
-	const models = parseModelsFromOutput(output, providerId);
+	// Use --verbose so each model carries its `variants` object, from which we
+	// derive the per-model variant names (provider-specific reasoning efforts).
+	const output = getOpencodeModelsOutput(providerId, true);
+	const models = parseVerboseModelsOutput(output, providerId);
 
 	_modelsCache.set(providerId, models);
 	return models;

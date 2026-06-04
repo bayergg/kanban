@@ -1308,6 +1308,7 @@ export const runtimeOpenCodeModelSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	provider: z.string(),
+	variants: z.array(z.string()).default([]),
 });
 export type RuntimeOpenCodeModel = z.infer<typeof runtimeOpenCodeModelSchema>;
 
