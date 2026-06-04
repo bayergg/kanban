@@ -75,7 +75,9 @@ describe("board dependency state", () => {
 		});
 		const backlogCards = board.columns.find((column) => column.id === "backlog")?.cards ?? [];
 
-		expect(backlogCards[0]?.id).toBe("4fzzz");
+		// createShortTaskId() takes the first 5 hex chars of generateUuid(), whose
+		// last-resort path derives each nibble from Math.random().
+		expect(backlogCards[0]?.id).toBe("11111");
 	});
 
 	it("prevents duplicate links in either direction", () => {

@@ -1,6 +1,7 @@
 import { createWriteStream, readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import packageJson from "../../package.json" with { type: "json" };
 import { installGracefulShutdownHandlers } from "../core/graceful-shutdown";
 import {
 	buildKanbanRuntimeUrl,
@@ -15,9 +16,12 @@ import {
 import { disablePasscode, generateInternalToken, generatePasscode, setPasscode } from "../security/passcode-manager";
 import type { RuntimeStateHub } from "../server/runtime-state-hub";
 import type { WorkspaceRegistry } from "../server/workspace-registry";
+import { clearPendingUpdateNotification, getPendingUpdateNotification, runOnDemandUpdate } from "../update/update";
 import { createControlServer } from "./control-server";
 import { getDaemonLogPath, removePidFile, writePidFile } from "./pid-file";
 import { redirectStdio } from "./process-detach";
+
+const KANBAN_VERSION = typeof packageJson.version === "string" ? packageJson.version : "0.1.0";
 
 export interface StartDaemonOptions {
 	foreground: boolean;
@@ -194,6 +198,46 @@ async function startRuntimeServer(options: StartDaemonOptions): Promise<DaemonRu
 		disposeWorkspace: disposeTrackedWorkspace,
 		collectProjectWorktreeTaskIdsForRemoval,
 		pickDirectoryPathFromSystemDialog,
+		getUpdateStatus: () => {
+			const notification = getPendingUpdateNotification();
+			if (!notification) {
+				return {
+					currentVersion: KANBAN_VERSION,
+					latestVersion: null,
+					updateAvailable: false,
+					updateTiming: null,
+					installCommand: null,
+				};
+			}
+			return {
+				currentVersion: notification.currentVersion,
+				latestVersion: notification.latestVersion,
+				updateAvailable: true,
+				updateTiming: notification.updateTiming,
+				installCommand: notification.installCommand,
+			};
+		},
+		runUpdateNow: async () => {
+			const result = await runOnDemandUpdate({
+				currentVersion: KANBAN_VERSION,
+			});
+			if (
+				result.status === "updated" ||
+				result.status === "already_up_to_date" ||
+				result.status === "cache_refreshed"
+			) {
+				// The pending notification is a one-shot signal recorded at startup.
+				// Clearing it here prevents the modal from reappearing on page reload
+				// after the user has already applied the update.
+				clearPendingUpdateNotification();
+			}
+			return {
+				status: result.status,
+				currentVersion: result.currentVersion,
+				latestVersion: result.latestVersion,
+				message: result.message,
+			};
+		},
 	});
 
 	const close = async () => {
