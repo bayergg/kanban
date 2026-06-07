@@ -1,4 +1,3 @@
-import { access, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -16,11 +15,6 @@ import { resolveHomeAgentAppendSystemPrompt } from "../prompts/append-system-pro
 import { getRuntimeHomePath } from "../state/workspace-state";
 import { configureCodexHooks, hasCodexConfigOverride } from "./codex-hook-config";
 import { createHookRuntimeEnv } from "./hook-runtime-context";
-import {
-	getOpenCodeAuthPathCandidates,
-	getOpenCodeConfigPathCandidates,
-	getOpenCodeModelStatePathCandidates,
-} from "./opencode-paths";
 import { stripAnsi } from "./output-utils";
 import type { SessionTransitionEvent } from "./session-state-machine";
 import { prepareTaskPromptWithImages } from "./task-image-prompt";
@@ -887,31 +881,6 @@ const geminiAdapter: AgentSessionAdapter = {
 	},
 };
 
-async function resolveOpenCodeBaseConfigPath(explicitPath: string | undefined): Promise<string | null> {
-	const candidates = getOpenCodeConfigPathCandidates({ explicitPath });
-	for (const candidate of candidates) {
-		try {
-			await access(candidate);
-			return candidate;
-		} catch {
-			// Keep searching.
-		}
-	}
-	return null;
-}
-
-function hasOpenCodeModelArg(args: string[]): boolean {
-	for (const arg of args) {
-		if (arg === "--model" || arg === "-m") {
-			return true;
-		}
-		if (arg.startsWith("--model=") || arg.startsWith("-m=")) {
-			return true;
-		}
-	}
-	return false;
-}
-
 function hasOpenCodeAgentArg(args: string[]): boolean {
 	for (const arg of args) {
 		if (arg === "--agent") {
@@ -924,201 +893,10 @@ function hasOpenCodeAgentArg(args: string[]): boolean {
 	return false;
 }
 
-function normalizeOpenCodeModel(providerId: string, modelId: string): string {
-	if (modelId.startsWith(`${providerId}/`)) {
-		return modelId;
-	}
-	return `${providerId}/${modelId}`;
-}
-
-function stripJsonComments(input: string): string {
-	let output = "";
-	let inString = false;
-	let escaped = false;
-	let inLineComment = false;
-	let inBlockComment = false;
-
-	for (let i = 0; i < input.length; i += 1) {
-		const current = input[i];
-		const next = i + 1 < input.length ? input[i + 1] : "";
-
-		if (inLineComment) {
-			if (current === "\n") {
-				inLineComment = false;
-				output += current;
-			}
-			continue;
-		}
-		if (inBlockComment) {
-			if (current === "*" && next === "/") {
-				inBlockComment = false;
-				i += 1;
-			}
-			continue;
-		}
-		if (!inString && current === "/" && next === "/") {
-			inLineComment = true;
-			i += 1;
-			continue;
-		}
-		if (!inString && current === "/" && next === "*") {
-			inBlockComment = true;
-			i += 1;
-			continue;
-		}
-
-		output += current;
-		if (inString) {
-			if (escaped) {
-				escaped = false;
-			} else if (current === "\\") {
-				escaped = true;
-			} else if (current === '"') {
-				inString = false;
-			}
-			continue;
-		}
-		if (current === '"') {
-			inString = true;
-		}
-	}
-	return output;
-}
-
-function tryExtractOpenCodeModelFromConfig(rawConfig: string): string | null {
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(rawConfig);
-	} catch {
-		try {
-			parsed = JSON.parse(stripJsonComments(rawConfig));
-		} catch {
-			return null;
-		}
-	}
-	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-		return null;
-	}
-	const root = parsed as Record<string, unknown>;
-
-	const directModel = root.model;
-	if (typeof directModel === "string" && directModel.trim()) {
-		return directModel.trim();
-	}
-
-	const mode = root.mode;
-	if (mode && typeof mode === "object" && !Array.isArray(mode)) {
-		const build = (mode as Record<string, unknown>).build;
-		if (build && typeof build === "object" && !Array.isArray(build)) {
-			const model = (build as Record<string, unknown>).model;
-			if (typeof model === "string" && model.trim()) {
-				return model.trim();
-			}
-		}
-	}
-
-	const agent = root.agent;
-	if (agent && typeof agent === "object" && !Array.isArray(agent)) {
-		const build = (agent as Record<string, unknown>).build;
-		if (build && typeof build === "object" && !Array.isArray(build)) {
-			const model = (build as Record<string, unknown>).model;
-			if (typeof model === "string" && model.trim()) {
-				return model.trim();
-			}
-		}
-	}
-
-	return null;
-}
-
-async function resolveOpenCodePreferredModelArg(configPath: string | null): Promise<string | null> {
-	if (configPath) {
-		try {
-			const rawConfig = await readFile(configPath, "utf8");
-			const modelFromConfig = tryExtractOpenCodeModelFromConfig(rawConfig);
-			if (modelFromConfig) {
-				return modelFromConfig;
-			}
-		} catch {
-			// Fall through to state-based fallback.
-		}
-	}
-
-	const modelStateCandidates = getOpenCodeModelStatePathCandidates();
-	let recentModels: Array<{ providerID?: unknown; modelID?: unknown }> = [];
-	for (const modelStatePath of modelStateCandidates) {
-		try {
-			const raw = await readFile(modelStatePath, "utf8");
-			const parsed = JSON.parse(raw) as { recent?: Array<{ providerID?: unknown; modelID?: unknown }> };
-			if (Array.isArray(parsed.recent)) {
-				recentModels = parsed.recent;
-				break;
-			}
-		} catch {
-			// Keep searching through candidate state paths.
-		}
-	}
-	if (recentModels.length === 0) {
-		return null;
-	}
-
-	const configuredProviders = new Set<string>();
-	for (const authPath of getOpenCodeAuthPathCandidates()) {
-		try {
-			const raw = await readFile(authPath, "utf8");
-			const parsed = JSON.parse(raw) as Record<string, unknown>;
-			for (const [provider, value] of Object.entries(parsed)) {
-				if (!value || typeof value !== "object" || Array.isArray(value)) {
-					continue;
-				}
-				const key = (value as Record<string, unknown>).key;
-				if (typeof key === "string" && key.trim()) {
-					configuredProviders.add(provider);
-				}
-			}
-			break;
-		} catch {
-			// Keep searching through candidate auth paths.
-		}
-	}
-
-	const candidates: Array<{ providerId: string; model: string }> = [];
-	for (const entry of recentModels) {
-		const providerId = typeof entry.providerID === "string" ? entry.providerID.trim() : "";
-		const modelId = typeof entry.modelID === "string" ? entry.modelID.trim() : "";
-		if (!providerId || !modelId) {
-			continue;
-		}
-		candidates.push({ providerId, model: normalizeOpenCodeModel(providerId, modelId) });
-	}
-	if (candidates.length === 0) {
-		return null;
-	}
-
-	const preferredProviderOrder = ["openrouter", "anthropic", "openai", "opencode", "google", "amazon-bedrock"];
-	for (const providerId of preferredProviderOrder) {
-		const match = candidates.find((candidate) => candidate.providerId === providerId);
-		if (!match) {
-			continue;
-		}
-		if (configuredProviders.size === 0 || configuredProviders.has(providerId)) {
-			return match.model;
-		}
-	}
-
-	const configuredMatch = candidates.find((candidate) => configuredProviders.has(candidate.providerId));
-	if (configuredMatch) {
-		return configuredMatch.model;
-	}
-
-	return candidates[0].model;
-}
-
 const opencodeAdapter: AgentSessionAdapter = {
 	async prepare(input) {
 		const args = [...input.args];
 		const env: Record<string, string | undefined> = {};
-		const baseConfigPath = await resolveOpenCodeBaseConfigPath(input.env?.OPENCODE_CONFIG);
 		if (input.resumeFromTrash && !hasCliOption(args, "--continue")) {
 			args.push("--continue");
 		}
@@ -1154,15 +932,6 @@ const opencodeAdapter: AgentSessionAdapter = {
 				}),
 			);
 			env.OPENCODE_CONFIG = configPath;
-		}
-
-		// Workaround: with --prompt, OpenCode can pick an unexpected provider/model.
-		// Explicitly pass the user's preferred model so prompt runs stay on their usual provider.
-		if (!hasOpenCodeModelArg(args)) {
-			const preferredModel = await resolveOpenCodePreferredModelArg(baseConfigPath);
-			if (preferredModel) {
-				args.push("--model", preferredModel);
-			}
 		}
 
 		const appendedSystemPrompt = resolveHomeAgentAppendSystemPrompt(input.taskId);

@@ -318,42 +318,8 @@ describe("prepareAgentLaunch hook strategies", () => {
 		expect(plugin).toContain('currentState = "idle"');
 	});
 
-	it("loads OpenCode preferred model from LOCALAPPDATA state and auth paths", async () => {
-		const homePath = setupTempHome();
-		const localAppDataPath = join(homePath, "AppData", "Local");
-		process.env.LOCALAPPDATA = localAppDataPath;
-
-		const statePath = join(localAppDataPath, "opencode", "state");
-		mkdirSync(statePath, { recursive: true });
-		writeFileSync(
-			join(statePath, "model.json"),
-			JSON.stringify(
-				{
-					recent: [
-						{ providerID: "anthropic", modelID: "claude-3-7-sonnet" },
-						{ providerID: "openai", modelID: "gpt-4o" },
-					],
-				},
-				null,
-				2,
-			),
-			"utf8",
-		);
-
-		const authPath = join(localAppDataPath, "opencode");
-		mkdirSync(authPath, { recursive: true });
-		writeFileSync(
-			join(authPath, "auth.json"),
-			JSON.stringify(
-				{
-					openai: { key: "sk-test" },
-				},
-				null,
-				2,
-			),
-			"utf8",
-		);
-
+	it("does not inject --model for OpenCode (lets OpenCode resolve its own configured model)", async () => {
+		setupTempHome();
 		const launch = await prepareAgentLaunch({
 			taskId: "task-opencode-model",
 			agentId: "opencode",
@@ -363,9 +329,23 @@ describe("prepareAgentLaunch hook strategies", () => {
 			prompt: "",
 		});
 
+		expect(launch.args).not.toContain("--model");
+	});
+
+	it("preserves an explicit --model from custom args for OpenCode", async () => {
+		setupTempHome();
+		const launch = await prepareAgentLaunch({
+			taskId: "task-opencode-explicit-model",
+			agentId: "opencode",
+			binary: "opencode",
+			args: ["--model", "anthropic/claude-sonnet-4-5"],
+			cwd: "/tmp",
+			prompt: "",
+		});
+
 		const modelIndex = launch.args.indexOf("--model");
 		expect(modelIndex).toBeGreaterThan(-1);
-		expect(launch.args[modelIndex + 1]).toBe("openai/gpt-4o");
+		expect(launch.args[modelIndex + 1]).toBe("anthropic/claude-sonnet-4-5");
 	});
 
 	it("writes Droid settings with hook transitions and runtime autonomy mode", async () => {
