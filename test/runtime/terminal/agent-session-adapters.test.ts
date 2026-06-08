@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -346,70 +346,6 @@ describe("prepareAgentLaunch hook strategies", () => {
 		const modelIndex = launch.args.indexOf("--model");
 		expect(modelIndex).toBeGreaterThan(-1);
 		expect(launch.args[modelIndex + 1]).toBe("anthropic/claude-sonnet-4-5");
-	});
-
-	it("strips --variant from OpenCode args and injects it via OPENCODE_CONFIG_CONTENT", async () => {
-		setupTempHome();
-		const launch = await prepareAgentLaunch({
-			taskId: "task-opencode-variant",
-			agentId: "opencode",
-			binary: "opencode",
-			args: ["--agent", "plan", "--model", "anthropic/claude-opus-4-6", "--variant", "max"],
-			cwd: "/tmp",
-			prompt: "hello",
-			workspaceId: "workspace-1",
-		});
-
-		// --variant must NOT appear in the CLI args (TUI doesn't support it).
-		expect(launch.args).not.toContain("--variant");
-		// --agent and --model must still be present.
-		expect(launch.args).toContain("--agent");
-		expect(launch.args).toContain("--model");
-
-		// Variant is injected via OPENCODE_CONFIG_CONTENT (per-process env, not shared file).
-		const content = launch.env.OPENCODE_CONFIG_CONTENT;
-		expect(content).toBeDefined();
-		const parsed = JSON.parse(content!) as { agent?: Record<string, { variant?: string }> };
-		expect(parsed.agent?.plan?.variant).toBe("max");
-
-		// OPENCODE_CONFIG (plugin file) must still be present.
-		expect(launch.env.OPENCODE_CONFIG).toBeDefined();
-	});
-
-	it("strips --variant=value syntax from OpenCode args", async () => {
-		setupTempHome();
-		const launch = await prepareAgentLaunch({
-			taskId: "task-opencode-variant-eq",
-			agentId: "opencode",
-			binary: "opencode",
-			args: ["--variant=high"],
-			cwd: "/tmp",
-			prompt: "test",
-			workspaceId: "workspace-1",
-		});
-
-		expect(launch.args).not.toContain("--variant=high");
-		expect(launch.args.some((a) => a.startsWith("--variant"))).toBe(false);
-		const parsed = JSON.parse(launch.env.OPENCODE_CONFIG_CONTENT!) as {
-			agent?: Record<string, { variant?: string }>;
-		};
-		// No explicit --agent → defaults to "build".
-		expect(parsed.agent?.build?.variant).toBe("high");
-	});
-
-	it("does not set OPENCODE_CONFIG_CONTENT when --variant is absent", async () => {
-		setupTempHome();
-		const launch = await prepareAgentLaunch({
-			taskId: "task-opencode-no-variant",
-			agentId: "opencode",
-			binary: "opencode",
-			args: [],
-			cwd: "/tmp",
-			prompt: "test",
-			workspaceId: "workspace-1",
-		});
-
-		expect(launch.env.OPENCODE_CONFIG_CONTENT).toBeUndefined();
 	});
 
 	it("writes Droid settings with hook transitions and runtime autonomy mode", async () => {

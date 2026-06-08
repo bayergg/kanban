@@ -288,7 +288,7 @@ export function TaskAgentModelPicker({
 		effectiveAgentId === "gemini" || effectiveAgentId === "codex" || effectiveAgentId === "opencode";
 
 	const handleAgentSelectorChange = useCallback(
-		(selection: { agentId?: string; providerId?: string; modelId?: string; variant?: string }) => {
+		(selection: { agentId?: string; providerId?: string; modelId?: string }) => {
 			const args: string[] = [];
 			if (effectiveAgentId === "gemini") {
 				if (selection.modelId) args.push("--model", selection.modelId);
@@ -302,7 +302,6 @@ export function TaskAgentModelPicker({
 			} else if (effectiveAgentId === "opencode") {
 				if (selection.agentId) args.push("--agent", selection.agentId);
 				if (selection.modelId) args.push("--model", selection.modelId);
-				if (selection.variant) args.push("--variant", selection.variant);
 			}
 			onCustomArgsChange?.(args.length > 0 ? args : undefined);
 		},

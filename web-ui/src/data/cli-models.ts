@@ -2,12 +2,6 @@ export interface Model {
 	id: string;
 	name: string;
 	provider: string;
-	/**
-	 * Model variant names (provider-specific reasoning efforts, e.g. "high", "max").
-	 * Only populated for OpenCode models; empty/absent when the model has no variants.
-	 * Order is preserved from the OpenCode CLI output.
-	 */
-	variants?: string[];
 }
 
 export interface Provider {

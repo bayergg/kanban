@@ -893,47 +893,6 @@ function hasOpenCodeAgentArg(args: string[]): boolean {
 	return false;
 }
 
-/**
- * Extracts and removes a `--<flag> <value>` or `--<flag>=<value>` pair from
- * `args` (mutates in place). Returns the extracted value, or `null` if the
- * flag is not present.
- */
-function extractCliFlag(args: string[], flag: string): string | null {
-	for (let i = 0; i < args.length; i += 1) {
-		const arg = args[i];
-		if (arg === `--${flag}`) {
-			const value = args[i + 1];
-			if (value !== undefined && !value.startsWith("--")) {
-				args.splice(i, 2);
-				return value;
-			}
-			return null;
-		}
-		if (arg.startsWith(`--${flag}=`)) {
-			const value = arg.slice(`--${flag}=`.length);
-			args.splice(i, 1);
-			return value || null;
-		}
-	}
-	return null;
-}
-
-/**
- * Reads `--agent` from `args` (without removing it) to determine which agent
- * the session will use.
- */
-function peekOpenCodeAgentArg(args: string[]): string | null {
-	for (let i = 0; i < args.length; i += 1) {
-		if (args[i] === "--agent" && args[i + 1] && !args[i + 1].startsWith("--")) {
-			return args[i + 1];
-		}
-		if (args[i].startsWith("--agent=")) {
-			return args[i].slice("--agent=".length) || null;
-		}
-	}
-	return null;
-}
-
 const opencodeAdapter: AgentSessionAdapter = {
 	async prepare(input) {
 		const args = [...input.args];
@@ -947,18 +906,6 @@ const opencodeAdapter: AgentSessionAdapter = {
 			if (!hasOpenCodeAgentArg(args)) {
 				args.push("--agent", "plan");
 			}
-		}
-
-		// OpenCode's TUI command (`opencode --prompt`) does not accept `--variant`.
-		// That flag only works with `opencode run`. Extract it from args and inject
-		// it via OPENCODE_CONFIG_CONTENT (an inline JSON env var that OpenCode
-		// merges with highest precedence). This avoids the shared-config-file
-		// problem where concurrent sessions overwrite each other's settings.
-		const variant = extractCliFlag(args, "variant");
-
-		if (variant) {
-			const agentName = peekOpenCodeAgentArg(args) ?? "build";
-			env.OPENCODE_CONFIG_CONTENT = JSON.stringify({ agent: { [agentName]: { variant } } });
 		}
 
 		const hooks = resolveHookContext(input);

@@ -9,18 +9,9 @@ import { useOpenCodeProviders } from "../hooks/useOpenCodeProviders";
 
 export type CLIId = "gemini" | "codex" | "opencode";
 
-// Sentinel for the "Default" variant option. Radix Select disallows empty-string
-// item values, so we use this and translate it back to "" (no --variant flag).
-const OPENCODE_DEFAULT_VARIANT = "__default__";
-
-function parseCustomArgs(args: string[] | undefined): {
-	agentId?: string;
-	modelId?: string;
-	providerId?: string;
-	variant?: string;
-} {
+function parseCustomArgs(args: string[] | undefined): { agentId?: string; modelId?: string; providerId?: string } {
 	if (!args) return {};
-	const result: { agentId?: string; modelId?: string; providerId?: string; variant?: string } = {};
+	const result: { agentId?: string; modelId?: string; providerId?: string } = {};
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--agent" && i + 1 < args.length) {
 			result.agentId = args[i + 1];
@@ -31,24 +22,14 @@ function parseCustomArgs(args: string[] | undefined): {
 		} else if (args[i] === "--local-provider" && i + 1 < args.length) {
 			result.providerId = args[i + 1];
 			i++;
-		} else if (args[i] === "--variant" && i + 1 < args.length) {
-			result.variant = args[i + 1];
-			i++;
 		}
 	}
 	return result;
 }
 
-export interface AgentSelectorSelection {
-	agentId?: string;
-	providerId?: string;
-	modelId?: string;
-	variant?: string;
-}
-
 interface AgentSelectorProps {
 	cli: CLIId;
-	onSelectionChange?: (selection: AgentSelectorSelection) => void;
+	onSelectionChange?: (selection: { agentId?: string; providerId?: string; modelId?: string }) => void;
 	initialCustomArgs?: string[];
 }
 
@@ -71,14 +52,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 	const [selectedOpenCodeModel, setSelectedOpenCodeModel] = useState<string | null>(
 		parsedInitial.current.modelId ?? null,
 	);
-	const [selectedOpenCodeVariant, setSelectedOpenCodeVariant] = useState<string>(parsedInitial.current.variant ?? "");
-
-	// The variants available for the currently-selected OpenCode model. Order is
-	// preserved from the OpenCode CLI output (e.g. low → high).
-	const openCodeVariants = useMemo(() => {
-		if (!selectedOpenCodeModel) return [];
-		return openCodeModels.find((model) => model.id === selectedOpenCodeModel)?.variants ?? [];
-	}, [openCodeModels, selectedOpenCodeModel]);
 
 	// Codex specific states
 	const [selectedCodexProvider, setSelectedCodexProvider] = useState<string>(
@@ -117,23 +90,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 	const handleOpenCodeProviderChange = (value: string) => {
 		setSelectedOpenCodeProvider(value);
 		setSelectedOpenCodeModel(null); // Reset model when provider changes
-		setSelectedOpenCodeVariant(""); // Variants are model-specific — reset
 	};
-
-	const handleOpenCodeModelChange = (value: string) => {
-		setSelectedOpenCodeModel(value);
-		setSelectedOpenCodeVariant(""); // Variants are model-specific — reset
-	};
-
-	// Drop a selected variant that isn't valid for the loaded model's variant set.
-	// Runs once models finish loading (e.g. a seeded `--variant` from a saved task
-	// whose model only supports a different set).
-	useEffect(() => {
-		if (cli !== "opencode" || isLoadingModels || !selectedOpenCodeModel) return;
-		if (selectedOpenCodeVariant && !openCodeVariants.includes(selectedOpenCodeVariant)) {
-			setSelectedOpenCodeVariant("");
-		}
-	}, [cli, isLoadingModels, selectedOpenCodeModel, selectedOpenCodeVariant, openCodeVariants]);
 
 	const handleCodexProviderChange = (value: string) => {
 		setSelectedCodexProvider(value);
@@ -160,7 +117,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 				agentId: selectedAgent,
 				providerId: selectedOpenCodeProvider || undefined,
 				modelId: selectedOpenCodeModel || undefined,
-				variant: selectedOpenCodeVariant || undefined,
 			});
 		}
 	}, [
@@ -171,7 +127,6 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 		selectedAgent,
 		selectedOpenCodeProvider,
 		selectedOpenCodeModel,
-		selectedOpenCodeVariant,
 		onSelectionChange,
 	]);
 
@@ -206,32 +161,13 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ cli, onSelectionCh
 						<SelectorField
 							label="Model"
 							value={selectedOpenCodeModel || ""}
-							onValueChange={handleOpenCodeModelChange}
+							onValueChange={setSelectedOpenCodeModel}
 							options={openCodeModels}
 							isLoading={isLoadingModels}
 							disabled={!selectedOpenCodeProvider}
 							placeholder="Select model..."
 						/>
 					</div>
-
-					{/* Variant selector — only shown when the selected model exposes variants
-					    (provider-specific reasoning efforts). "Default" omits the --variant flag.
-					    Radix Select forbids empty-string item values, so "Default" uses a sentinel. */}
-					{openCodeVariants.length > 0 && (
-						<div className="w-full sm:w-1/2 min-w-0">
-							<SelectorField
-								label="Variant"
-								value={selectedOpenCodeVariant || OPENCODE_DEFAULT_VARIANT}
-								onValueChange={(value) =>
-									setSelectedOpenCodeVariant(value === OPENCODE_DEFAULT_VARIANT ? "" : value)
-								}
-								options={[
-									{ id: OPENCODE_DEFAULT_VARIANT, name: "Default" },
-									...openCodeVariants.map((variant) => ({ id: variant, name: variant })),
-								]}
-							/>
-						</div>
-					)}
 				</>
 			)}
 
